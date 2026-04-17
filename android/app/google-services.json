@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "475205871903",
+    "project_id": "mission-app-b29ed",
+    "storage_bucket": "mission-app-b29ed.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:475205871903:android:8fba92343376dbc67ce82a",
+        "android_client_info": {
+          "package_name": "com.thaimission.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRan1zel-CjArvR2zuhCHxNvEpbaKN73c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
