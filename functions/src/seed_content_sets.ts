@@ -20,16 +20,43 @@ async function run(): Promise<void> {
         level: contentSet.level,
         mode: contentSet.mode,
         locale: contentSet.locale,
-        itemCount: contentSet.items.length,
+        season: contentSet.season,
+        version: contentSet.version,
+        isActive: contentSet.isActive,
+        supportsExpansion: contentSet.supportsExpansion,
+        sentenceCountDaily: contentSet.category === "daily" ? contentSet.sentences.length : 0,
+        sentenceCountMission: contentSet.category === "mission" ? contentSet.sentences.length : 0,
+        itemCount: contentSet.sentences.length,
+        sentenceItemCount: contentSet.sentences.length,
+        wordItemCount: contentSet.words.length,
+        itemCountByMode: {
+          sentence_learning: contentSet.sentences.length,
+          sentence_test: contentSet.sentences.length,
+          flash_sentence_learning: contentSet.sentences.length,
+          flash_sentence_test: contentSet.sentences.length,
+          flash_word_learning: contentSet.words.length,
+          flash_word_test: contentSet.words.length,
+        },
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
       {merge: true},
     );
 
-    for (const item of contentSet.items) {
-      await contentSetRef.collection("items").doc(item.itemId).set(
+    for (const item of contentSet.sentences) {
+      const payload = {
+        ...item,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      await contentSetRef.collection("sentences").doc(item.itemId).set(
+        payload,
+        {merge: true},
+      );
+    }
+
+    for (const word of contentSet.words) {
+      await contentSetRef.collection("words").doc(word.wordId).set(
         {
-          ...item,
+          ...word,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
         {merge: true},

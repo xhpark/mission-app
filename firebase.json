@@ -1,1 +1,34 @@
-{"functions":{"source":"functions","runtime":"nodejs20"},"firestore":{"rules":"firestore.rules"},"storage":{"rules":"storage.rules"},"flutter":{"platforms":{"android":{"default":{"projectId":"mission-app-b29ed","appId":"1:475205871903:android:8fba92343376dbc67ce82a","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"mission-app-b29ed","configurations":{"android":"1:475205871903:android:8fba92343376dbc67ce82a","web":"1:475205871903:web:0ac8ffdfe91b597c7ce82a","windows":"1:475205871903:web:83046b721fabf94a7ce82a"}}}}}}
+{
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs22"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "mission-app-b29ed",
+          "appId": "1:475205871903:android:8fba92343376dbc67ce82a",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "mission-app-b29ed",
+          "configurations": {
+            "android": "1:475205871903:android:8fba92343376dbc67ce82a",
+            "web": "1:475205871903:web:0ac8ffdfe91b597c7ce82a",
+            "windows": "1:475205871903:web:83046b721fabf94a7ce82a"
+          }
+        }
+      }
+    }
+  }
+}

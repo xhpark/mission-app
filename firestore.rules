@@ -21,11 +21,13 @@ service cloud.firestore {
     }
 
     match /user_profiles/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId);
+      allow write: if false;
     }
 
     match /user_runtime/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId);
+      allow write: if false;
     }
 
     match /user_report_state/{userId} {
@@ -33,12 +35,9 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    match /study_progress/{userId}/{document=**} {
-      allow read, write: if isOwner(userId);
-    }
-
     match /study_sessions/{userId}/{document=**} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId);
+      allow write: if false;
     }
 
     match /test_results/{userId}/{document=**} {
@@ -52,7 +51,8 @@ service cloud.firestore {
     }
 
     match /resume_states/{userId}/{document=**} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId);
+      allow write: if false;
     }
   }
 }

@@ -8,6 +8,16 @@ export interface SeedSentenceItem {
   audioUrl: string;
 }
 
+export interface SeedWordItem {
+  wordId: string;
+  order: number;
+  foreignText: string;
+  nativeText: string;
+  pronunciation: string;
+  hint: string;
+  audioUrl: string;
+}
+
 export interface SeedContentSet {
   contentSetId: string;
   title: string;
@@ -16,82 +26,153 @@ export interface SeedContentSet {
   level: "beginner" | "intermediate" | "advanced";
   mode: "sentence_learning";
   locale: "th-TH";
-  items: SeedSentenceItem[];
+  version: number;
+  season: string;
+  isActive: boolean;
+  supportsExpansion: boolean;
+  sentences: SeedSentenceItem[];
+  words: SeedWordItem[];
 }
 
 export const seedContentSets: SeedContentSet[] = [
   {
     contentSetId: "daily-beginner-default",
-    title: "Daily Basics",
-    description: "Beginner Thai greetings and simple daily phrases.",
+    title: "일상 회화 - 초급",
+    description: "한국인 학습자를 위한 태국어 일상 핵심 문장/단어.",
     category: "daily",
     level: "beginner",
     mode: "sentence_learning",
     locale: "th-TH",
-    items: [
+    version: 3,
+    season: "default",
+    isActive: true,
+    supportsExpansion: false,
+    sentences: [
       {
         itemId: "daily-beginner-001",
         order: 1,
-        thaiText: "Sawasdee krap",
-        nativeText: "Hello.",
-        pronunciation: "sa-wat-dee krap",
-        hint: "A polite and common greeting in Thai.",
+        thaiText: "สวัสดี (ครับ/ค่ะ)",
+        nativeText: "안녕하세요",
+        pronunciation: "sa-wat-dee (khrap/kha)",
+        hint: "기본 인사 표현",
         audioUrl: "",
       },
       {
         itemId: "daily-beginner-002",
         order: 2,
-        thaiText: "Khob khun krap",
-        nativeText: "Thank you.",
-        pronunciation: "khob-khun krap",
-        hint: "Use this to express thanks politely.",
+        thaiText: "ขอบคุณ (ครับ/ค่ะ)",
+        nativeText: "감사합니다",
+        pronunciation: "khop-khun (khrap/kha)",
+        hint: "감사 표현",
         audioUrl: "",
       },
       {
         itemId: "daily-beginner-003",
         order: 3,
-        thaiText: "Pai duay kan",
-        nativeText: "Let us go together.",
-        pronunciation: "pai duay kan",
-        hint: "A simple phrase for moving or traveling together.",
+        thaiText: "ไม่ใช่ (ครับ/ค่ะ)",
+        nativeText: "아니요",
+        pronunciation: "mai chai (khrap/kha)",
+        hint: "부정 응답",
+        audioUrl: "",
+      },
+    ],
+    words: [
+      {
+        wordId: "daily-word-001",
+        order: 1,
+        foreignText: "สวัสดี",
+        nativeText: "안녕하세요",
+        pronunciation: "sa-wat-dee",
+        hint: "인사",
+        audioUrl: "",
+      },
+      {
+        wordId: "daily-word-002",
+        order: 2,
+        foreignText: "ขอบคุณ",
+        nativeText: "감사합니다",
+        pronunciation: "khop-khun",
+        hint: "감사",
+        audioUrl: "",
+      },
+      {
+        wordId: "daily-word-003",
+        order: 3,
+        foreignText: "ไม่ใช่",
+        nativeText: "아니요",
+        pronunciation: "mai chai",
+        hint: "부정",
         audioUrl: "",
       },
     ],
   },
   {
     contentSetId: "mission-beginner-default",
-    title: "Mission Conversation",
-    description: "Beginner phrases for simple mission and ministry settings.",
+    title: "미션 회화 - 초급",
+    description: "한국인 학습자를 위한 태국어 미션 핵심 문장/단어.",
     category: "mission",
     level: "beginner",
     mode: "sentence_learning",
     locale: "th-TH",
-    items: [
+    version: 3,
+    season: "default",
+    isActive: true,
+    supportsExpansion: false,
+    sentences: [
       {
         itemId: "mission-beginner-001",
         order: 1,
-        thaiText: "Rao maa chuay kan",
-        nativeText: "We came to help together.",
-        pronunciation: "rao maa chuay kan",
-        hint: "A gentle phrase for introducing shared service.",
+        thaiText: "พระเยซูรักคุณ",
+        nativeText: "예수님은 당신을 사랑합니다",
+        pronunciation: "phra-yesu rak khun",
+        hint: "핵심 미션 문장",
         audioUrl: "",
       },
       {
         itemId: "mission-beginner-002",
         order: 2,
-        thaiText: "Rao yak athithan duay kan",
-        nativeText: "We want to pray together.",
-        pronunciation: "rao yak a-thi-than duay kan",
-        hint: "Useful when inviting someone to pray together.",
+        thaiText: "เราอยากอธิษฐานด้วยกัน",
+        nativeText: "함께 기도하고 싶어요",
+        pronunciation: "rao yak a-thit-than duai kan",
+        hint: "기도 제안 문장",
         audioUrl: "",
       },
       {
         itemId: "mission-beginner-003",
         order: 3,
-        thaiText: "Phra chao rak khun",
-        nativeText: "God loves you.",
-        pronunciation: "phra-chao rak khun",
-        hint: "A core encouragement phrase in mission conversation.",
+        thaiText: "พระเจ้าทรงรักคุณ",
+        nativeText: "하나님은 당신을 사랑합니다",
+        pronunciation: "phra-chao song rak khun",
+        hint: "복음 핵심 문장",
+        audioUrl: "",
+      },
+    ],
+    words: [
+      {
+        wordId: "mission-word-001",
+        order: 1,
+        foreignText: "พระเยซู",
+        nativeText: "예수님",
+        pronunciation: "phra-yesu",
+        hint: "미션 핵심 단어",
+        audioUrl: "",
+      },
+      {
+        wordId: "mission-word-002",
+        order: 2,
+        foreignText: "รัก",
+        nativeText: "사랑하다",
+        pronunciation: "rak",
+        hint: "핵심 동사",
+        audioUrl: "",
+      },
+      {
+        wordId: "mission-word-003",
+        order: 3,
+        foreignText: "อธิษฐาน",
+        nativeText: "기도하다",
+        pronunciation: "a-thit-than",
+        hint: "신앙 표현",
         audioUrl: "",
       },
     ],
