@@ -1,0 +1,13 @@
+{
+  "inputPath": "D:/proj/thai_upload_bundle_final_v2.xlsx",
+  "outputPath": "D:/proj/thai_upload_bundle_final_v2_words_reorganized.xlsx",
+  "beforeDataRows": 46,
+  "afterDataRows": 37,
+  "droppedRows": 9,
+  "droppedOrphans": 9,
+  "categoryCounts": {
+    "daily": 21,
+    "mission": 16,
+    "other": 0
+  }
+}

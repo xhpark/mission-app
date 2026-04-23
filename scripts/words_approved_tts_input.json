@@ -1,0 +1,437 @@
+{
+  "workbookPath": "D:/proj/thai_upload_bundle_final_v2.words_approved_rebuilt.xlsx",
+  "sheetName": "words_approved",
+  "header": [
+    "category",
+    "orderNo",
+    "koreanMeaning",
+    "foreignWord",
+    "phoneticText",
+    "hangulPronunciation",
+    "englishMeaning",
+    "wordType",
+    "linkedSentenceIds",
+    "nativeAudioFile",
+    "nativeAudioStatus",
+    "wordId",
+    "note",
+    "sourceFile"
+  ],
+  "totalItems": 46,
+  "items": [
+    {
+      "rowNo": 2,
+      "wordId": "THW_D001",
+      "thaiWord": "ครับ",
+      "category": "daily",
+      "orderNo": "1",
+      "koreanMeaning": "(남성 화자) 공손 표현",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 3,
+      "wordId": "THW_D002",
+      "thaiWord": "ค่ะ",
+      "category": "daily",
+      "orderNo": "2",
+      "koreanMeaning": "(여성 화자) 공손 표현",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 4,
+      "wordId": "THW_D003",
+      "thaiWord": "มาก",
+      "category": "daily",
+      "orderNo": "3",
+      "koreanMeaning": "매우, 많이",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 5,
+      "wordId": "THW_D004",
+      "thaiWord": "ไร",
+      "category": "daily",
+      "orderNo": "4",
+      "koreanMeaning": "무엇",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 6,
+      "wordId": "THW_D005",
+      "thaiWord": "ใช่",
+      "category": "daily",
+      "orderNo": "5",
+      "koreanMeaning": "예, 맞아요",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 7,
+      "wordId": "THW_D006",
+      "thaiWord": "ไม่ใช่",
+      "category": "daily",
+      "orderNo": "6",
+      "koreanMeaning": "아니오, 아니에요",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 8,
+      "wordId": "THW_D007",
+      "thaiWord": "ขอโทษ",
+      "category": "daily",
+      "orderNo": "7",
+      "koreanMeaning": "죄송합니다, 실례합니다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 9,
+      "wordId": "THW_D008",
+      "thaiWord": "ลาก่อน",
+      "category": "daily",
+      "orderNo": "8",
+      "koreanMeaning": "잘 가요",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 10,
+      "wordId": "THW_D009",
+      "thaiWord": "แล้ว",
+      "category": "daily",
+      "orderNo": "9",
+      "koreanMeaning": "그럼",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 11,
+      "wordId": "THW_D010",
+      "thaiWord": "คุณ",
+      "category": "daily",
+      "orderNo": "10",
+      "koreanMeaning": "당신",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 12,
+      "wordId": "THW_D011",
+      "thaiWord": "ชื่อ",
+      "category": "daily",
+      "orderNo": "11",
+      "koreanMeaning": "이름",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 13,
+      "wordId": "THW_D012",
+      "thaiWord": "อะไร",
+      "category": "daily",
+      "orderNo": "12",
+      "koreanMeaning": "무엇",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 14,
+      "wordId": "THW_D013",
+      "thaiWord": "อายุ",
+      "category": "daily",
+      "orderNo": "13",
+      "koreanMeaning": "나이",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 15,
+      "wordId": "THW_D014",
+      "thaiWord": "เท่าไหร่",
+      "category": "daily",
+      "orderNo": "14",
+      "koreanMeaning": "얼마, 몇",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 16,
+      "wordId": "THW_D015",
+      "thaiWord": "ทาน",
+      "category": "daily",
+      "orderNo": "15",
+      "koreanMeaning": "먹다, 드시다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 17,
+      "wordId": "THW_D016",
+      "thaiWord": "อร่อย",
+      "category": "daily",
+      "orderNo": "16",
+      "koreanMeaning": "맛있다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 18,
+      "wordId": "THW_D017",
+      "thaiWord": "นะ",
+      "category": "daily",
+      "orderNo": "17",
+      "koreanMeaning": "부드러운 권유/완화 어미",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 19,
+      "wordId": "THW_D018",
+      "thaiWord": "จริงๆ",
+      "category": "daily",
+      "orderNo": "18",
+      "koreanMeaning": "정말, 진짜",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 20,
+      "wordId": "THW_D019",
+      "thaiWord": "ยอด",
+      "category": "daily",
+      "orderNo": "19",
+      "koreanMeaning": "정점, 최고",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 21,
+      "wordId": "THW_D020",
+      "thaiWord": "ที่สุด",
+      "category": "daily",
+      "orderNo": "20",
+      "koreanMeaning": "가장, 최고로",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 22,
+      "wordId": "THW_D021",
+      "thaiWord": "ไม่",
+      "category": "daily",
+      "orderNo": "21",
+      "koreanMeaning": "아니다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 23,
+      "wordId": "THW_D022",
+      "thaiWord": "เป็น",
+      "category": "daily",
+      "orderNo": "22",
+      "koreanMeaning": "이다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 24,
+      "wordId": "THW_D023",
+      "thaiWord": "ไร",
+      "category": "daily",
+      "orderNo": "23",
+      "koreanMeaning": "무엇",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 25,
+      "wordId": "THW_D024",
+      "thaiWord": "พบ",
+      "category": "daily",
+      "orderNo": "24",
+      "koreanMeaning": "만나다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 26,
+      "wordId": "THW_D025",
+      "thaiWord": "กัน",
+      "category": "daily",
+      "orderNo": "25",
+      "koreanMeaning": "서로",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 27,
+      "wordId": "THW_D026",
+      "thaiWord": "ใหม่",
+      "category": "daily",
+      "orderNo": "26",
+      "koreanMeaning": "다시, 새로운",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 28,
+      "wordId": "THW_D027",
+      "thaiWord": "เยี่ยม",
+      "category": "daily",
+      "orderNo": "27",
+      "koreanMeaning": "훌륭하다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 29,
+      "wordId": "THW_D028",
+      "thaiWord": "ความ",
+      "category": "daily",
+      "orderNo": "28",
+      "koreanMeaning": "명사화 접두어",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 30,
+      "wordId": "THW_D029",
+      "thaiWord": "พวก",
+      "category": "daily",
+      "orderNo": "29",
+      "koreanMeaning": "복수접두사, ~들",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 31,
+      "wordId": "THW_D030",
+      "thaiWord": "ร้อง",
+      "category": "daily",
+      "orderNo": "30",
+      "koreanMeaning": "외치다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 32,
+      "wordId": "THW_M001",
+      "thaiWord": "พระเยซู",
+      "category": "mission",
+      "orderNo": "1",
+      "koreanMeaning": "예수님",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 33,
+      "wordId": "THW_M002",
+      "thaiWord": "รัก",
+      "category": "mission",
+      "orderNo": "2",
+      "koreanMeaning": "사랑하다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 34,
+      "wordId": "THW_M003",
+      "thaiWord": "พระเจ้า",
+      "category": "mission",
+      "orderNo": "3",
+      "koreanMeaning": "하나님",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 35,
+      "wordId": "THW_M004",
+      "thaiWord": "ทรง",
+      "category": "mission",
+      "orderNo": "4",
+      "koreanMeaning": "(신적 존칭 보조)",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 36,
+      "wordId": "THW_M005",
+      "thaiWord": "ขอ",
+      "category": "mission",
+      "orderNo": "5",
+      "koreanMeaning": "~해 주세요 / 바라다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 37,
+      "wordId": "THW_M006",
+      "thaiWord": "อวยพร",
+      "category": "mission",
+      "orderNo": "6",
+      "koreanMeaning": "축복",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 38,
+      "wordId": "THW_M007",
+      "thaiWord": "ความรัก",
+      "category": "mission",
+      "orderNo": "7",
+      "koreanMeaning": "사랑 (명사)",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 39,
+      "wordId": "THW_M008",
+      "thaiWord": "เชื่อ",
+      "category": "mission",
+      "orderNo": "8",
+      "koreanMeaning": "믿다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 40,
+      "wordId": "THW_M009",
+      "thaiWord": "พวกเรา",
+      "category": "mission",
+      "orderNo": "9",
+      "koreanMeaning": "우리",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 41,
+      "wordId": "THW_M010",
+      "thaiWord": "รู้จัก",
+      "category": "mission",
+      "orderNo": "10",
+      "koreanMeaning": "알다, 알게 되다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 42,
+      "wordId": "THW_M011",
+      "thaiWord": "เคย",
+      "category": "mission",
+      "orderNo": "11",
+      "koreanMeaning": "경험하다, ~해본 적 있다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 43,
+      "wordId": "THW_M012",
+      "thaiWord": "โบสถ์",
+      "category": "mission",
+      "orderNo": "12",
+      "koreanMeaning": "교회",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 44,
+      "wordId": "THW_M013",
+      "thaiWord": "อธิษฐาน",
+      "category": "mission",
+      "orderNo": "13",
+      "koreanMeaning": "기도하다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 45,
+      "wordId": "THW_M014",
+      "thaiWord": "จะ",
+      "category": "mission",
+      "orderNo": "14",
+      "koreanMeaning": "~할 것이다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 46,
+      "wordId": "THW_M015",
+      "thaiWord": "มา",
+      "category": "mission",
+      "orderNo": "15",
+      "koreanMeaning": "오세요, 함께 하자",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 47,
+      "wordId": "THW_M016",
+      "thaiWord": "เพลง",
+      "category": "mission",
+      "orderNo": "16",
+      "koreanMeaning": "노래하다",
+      "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    }
+  ]
+}
