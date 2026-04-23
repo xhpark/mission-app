@@ -1,0 +1,421 @@
+{
+  "@@locale": "ko",
+  "appTitle": "미션 언어 학습",
+  "learningSelectTitle": "학습 선택",
+  "learningSelectSubtitle": "카테고리, 난이도, 학습 모드를 선택하고 시작하세요.",
+  "startSession": "학습 시작",
+  "resumeSession": "이어서 학습",
+  "clearSession": "세션 초기화",
+  "failedToStartSession": "학습 세션 시작에 실패했습니다.",
+  "dismissError": "오류 닫기",
+  "menuGuide": "학습 가이드",
+  "menuResume": "이어하기",
+  "menuSignOut": "로그아웃",
+  "categoryLabel": "카테고리",
+  "levelLabel": "난이도",
+  "modeLabel": "학습 모드",
+  "guideTitle": "학습 가이드",
+  "guideHeroTitle": "시작 전에 확인하세요",
+  "guideHeroSubtitle": "아래 순서대로 진행하면 학습 흐름을 안정적으로 유지할 수 있습니다.",
+  "guideStart": "학습 시작하기",
+  "resumeTitle": "학습 이어하기",
+  "resumeHeader": "저장된 진행 정보",
+  "resumeStartNew": "새 세션 시작",
+  "resumeGoToMode": "선택 화면으로 이동",
+  "debugPanelTitle": "QA 디버그",
+  "debugRoute": "현재 경로",
+  "debugUserStatus": "사용자 상태",
+  "debugSessionId": "세션 ID",
+  "debugContentSetId": "콘텐츠 세트 ID",
+  "interactiveActionError": "처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+  "interactiveBackTooltip": "뒤로가기",
+  "interactiveProgressTitle": "진행 상태",
+  "interactiveProgressDescription": "현재 단계와 남은 시간을 확인하세요.",
+  "interactiveRemainingSeconds": "남은 시간 {seconds}초",
+  "@interactiveRemainingSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "interactivePromptDescription": "문장과 힌트를 확인하고, 듣기/말하기를 진행하세요.",
+  "interactiveNativeAudioPause": "원어민 음성 일시정지",
+  "interactiveNativeAudioPlay": "원어민 음성 재생",
+  "interactiveRecordStop": "녹음 중지",
+  "interactiveRecordStart": "말하기 연습 시작",
+  "interactiveMyRecordingListen": "내 녹음 듣기",
+  "interactiveRecordingGuidanceActive": "녹음 중입니다. 천천히 또렷하게 말해 주세요.",
+  "interactiveRecordingGuidanceIdle": "버튼을 눌러 녹음을 시작해 주세요.",
+  "interactiveSimilarityScore": "유사도 점수: {score}점",
+  "@interactiveSimilarityScore": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "interactiveRecognizedText": "인식 문장: {text}",
+  "@interactiveRecognizedText": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "interactiveCorrectFeedback": "좋아요. 정답입니다.",
+  "interactiveIncorrectFeedback": "아쉽습니다. 힌트를 다시 보고 재도전해 보세요.",
+  "interactiveSecondaryToSelect": "선택 화면으로",
+  "interactiveBlockedTimeExpired": "제한 시간이 종료되었습니다. 뒤로가기 후 다시 시작해 주세요.",
+  "interactiveBlockedSelectCorrect": "정답을 선택해야 다음으로 진행할 수 있습니다.",
+  "interactiveBlockedNeedRecording": "최소 1회 녹음을 완료해야 진행할 수 있습니다.",
+  "interactiveBlockedNeedSpeakingPass": "발음 평가 점수를 통과해야 진행할 수 있습니다.",
+  "interactiveNativeAudioPlayFailed": "원어민 음성을 재생하지 못했습니다.",
+  "interactiveMyRecordingPlayFailed": "내 녹음을 재생하지 못했습니다.",
+  "interactiveStartRecordingFailed": "마이크를 시작하지 못했습니다. 권한을 확인해 주세요.",
+  "interactiveRecordingStatusActive": "녹음 중입니다.",
+  "interactiveSpeakingPassed": "발음 평가를 통과했습니다.",
+  "interactiveSpeakingFailed": "발음 평가를 통과하지 못했습니다.",
+  "interactiveRecordingProcessFailed": "녹음 처리 중 오류가 발생했습니다.",
+  "sentenceLearningTitle": "문장 학습",
+  "sentenceLearningNoSessionMessage": "진행 중인 세션이 없습니다. 학습 선택 화면에서 세션을 시작해 주세요.",
+  "sentenceLearningGoToSelect": "학습 선택으로 이동",
+  "sentenceLearningHeroSubtitle": "문장 듣기, 말하기, 주요 단어 학습을 함께 진행합니다.",
+  "sentenceLearningSectionTitle": "학습 문장",
+  "sentenceLearningSectionDescription": "문장과 관련 주요 단어를 함께 학습하세요.",
+  "sentenceLearningLoadError": "문장을 불러오지 못했습니다. {error}",
+  "@sentenceLearningLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "sentenceLearningAudioNotReady": "듣기 음성이 아직 준비되지 않았습니다.",
+  "sentenceLearningAudioFailed": "음성 재생에 실패했습니다.",
+  "sentenceLearningListenSentence": "문장 들어보기",
+  "sentenceLearningReadWithMyVoice": "내 목소리로 읽기",
+  "sentenceLearningKeyWordsTitle": "주요 단어",
+  "sentenceLearningGoToSummary": "세션 요약으로 이동",
+  "sentenceLearningMicPermissionError": "마이크 권한을 확인해 주세요.",
+  "sentenceLearningRecordingProcessError": "녹음 처리 중 오류가 발생했습니다.",
+  "sentenceLearningLoading": "문장을 불러오는 중입니다...",
+  "sessionSummaryTitle": "세션 요약",
+  "sessionSummaryStatTotalItems": "총 학습 항목",
+  "sessionSummaryStatCompletedItems": "완료 항목",
+  "sessionSummaryStatAccuracy": "정확도",
+  "sessionSummaryStatCorrectAnswers": "정답 수",
+  "sessionSummaryStatSessionId": "세션 ID",
+  "sessionSummarySubtitleNoSession": "학습 세션이 완료되었습니다. 결과를 확인한 뒤 리포트를 제출하세요.",
+  "sessionSummarySubtitleWithMode": "{mode} 세션이 완료되었습니다. 리포트를 제출하면 다음 세션이 열립니다.",
+  "@sessionSummarySubtitleWithMode": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "sessionSummaryHeroTitle": "오늘 학습을 잘 마쳤어요.",
+  "sessionSummaryResultTitle": "학습 결과",
+  "sessionSummaryResultDescription": "오늘 세션에서 진행한 요약입니다.",
+  "sessionSummaryCoachNote": "코치 노트: 미션 문장의 발음이 개선되었습니다. 다음 세션에서도 말하기 연습을 이어가세요.",
+  "sessionSummaryNextRecommendationTitle": "다음 추천",
+  "sessionSummaryNextRecommendationDescription": "짧은 반복 학습으로 성취감을 유지해 보세요.",
+  "sessionSummaryNextRecommendationBody": "리포트를 제출하면 다음 학습 세션이 열리고, 관리자 확인 이후 고급 콘텐츠가 순차적으로 제공됩니다.",
+  "sessionSummarySecondaryToSelect": "선택 화면으로",
+  "sessionSummaryPrimaryToReportPreview": "리포트 프리뷰로",
+  "flashSentenceLearningPrimaryButton": "플래시 문장 테스트로 이동",
+  "flashSentenceLearningProgressLabel": "문장 {current} / {total}",
+  "@flashSentenceLearningProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "flashSentenceLearningPromptTitle": "오늘의 문장",
+  "flashSentenceLearningSubtitle": "짧고 반복적인 흐름으로 문장 감각을 익혀요.",
+  "flashSentenceLearningTitle": "플래시 문장 학습",
+  "flashSentenceTestChoicePrimaryButton": "말하기 테스트로 이동",
+  "flashSentenceTestChoiceProgressLabel": "문항 {current} / {total}",
+  "@flashSentenceTestChoiceProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "flashSentenceTestChoicePromptTitle": "한국어를 태국어로 고르기",
+  "flashSentenceTestChoiceSubtitle": "한국어 문장에 맞는 태국어를 선택하세요.",
+  "flashSentenceTestChoiceTitle": "플래시 문장 테스트 - 선택형",
+  "flashSentenceTestSpeakingPrimaryButton": "완료",
+  "flashSentenceTestSpeakingProgressLabel": "말하기 {current} / {total}",
+  "@flashSentenceTestSpeakingProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "flashSentenceTestSpeakingPromptTitle": "말하기 제시문",
+  "flashSentenceTestSpeakingSubtitle": "빠르게 말하고 유사도 점수를 확인해요.",
+  "flashSentenceTestSpeakingTitle": "플래시 문장 테스트 - 말하기",
+  "flashWordLearningPrimaryButton": "플래시 단어 테스트로 이동",
+  "flashWordLearningProgressLabel": "단어 {current} / {total}",
+  "@flashWordLearningProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "flashWordLearningPromptTitle": "오늘의 단어",
+  "flashWordLearningSubtitle": "짧은 반복으로 핵심 단어를 빠르게 익혀요.",
+  "flashWordLearningTitle": "플래시 단어 학습",
+  "flashWordTestPrimaryButton": "테스트 종료",
+  "flashWordTestProgressLabel": "문항 {current} / {total}",
+  "@flashWordTestProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "flashWordTestPromptTitle": "단어 의미 확인",
+  "flashWordTestSubtitle": "태국어 단어의 의미를 선택하세요.",
+  "flashWordTestTitle": "플래시 단어 테스트",
+  "guidePrinciple1": "학습 콘텐츠는 앱 내 포함된 문장/단어/오디오 데이터를 우선 사용합니다.",
+  "guidePrinciple2": "학습 이력은 누적되며 리포트 제출 전까지 유지됩니다.",
+  "guidePrinciple3": "새 학습 시작을 선택하면 이전 활성 세션은 포기 처리됩니다.",
+  "guidePrinciple4": "리포트 제출은 학습자 주도로 세션 내 원하는 시점에 가능합니다.",
+  "guidePrinciple5": "네트워크 장애를 대비해 재시도/동기화 경로를 제공합니다.",
+  "guidePrinciplesTitle": "학습/리포트 운영 원칙",
+  "guideStep1": "카테고리, 레벨, 학습 모드를 선택합니다.",
+  "guideStep2": "문장/단어 학습을 진행하고 필요 시 이어하기를 사용합니다.",
+  "guideStep3": "테스트를 완료하고 요약을 확인합니다.",
+  "guideStep4": "원하는 시점에 누적 리포트를 제출합니다.",
+  "guideStepsTitle": "학습 흐름",
+  "learningSelectActiveSessionTitle": "진행 중인 학습 세션이 있습니다.",
+  "learningSelectAsrNoPendingSync": "오프라인 동기화 대기 항목이 없습니다.",
+  "learningSelectAsrPendingSync": "오프라인 결과 {count}건이 동기화 대기 중입니다.",
+  "@learningSelectAsrPendingSync": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "learningSelectAsrPolicyIntro": "음성 인식 정책을 선택하세요. 이후에도 변경할 수 있습니다.",
+  "learningSelectAsrPolicyOffline": "오프라인 지원",
+  "learningSelectAsrPolicyOfflineDesc": "로컬 ASR 사용 시 오프라인에서도 말하기 평가를 계속할 수 있습니다.",
+  "learningSelectAsrPolicyServerOnly": "서버 STT 전용",
+  "learningSelectAsrPolicyServerOnlyDesc": "로컬 모델 다운로드 없이 사용합니다. 오프라인 평가는 불가합니다.",
+  "learningSelectAsrPolicyTitle": "음성 인식 정책",
+  "learningSelectAsrSyncNow": "지금 동기화",
+  "learningSelectCategoryDaily": "일상 회화",
+  "learningSelectCategoryMission": "선교",
+  "learningSelectConfirmCancel": "취소",
+  "learningSelectConfirmStartNew": "새로 시작",
+  "learningSelectConfirmStartNewMessage": "현재 세션은 포기 처리됩니다. 이어서 학습하려면 취소 후 이어하기를 누르세요.",
+  "learningSelectConfirmStartNewTitle": "새 학습 세션을 시작할까요?",
+  "learningSelectLevelAdvanced": "고급",
+  "learningSelectLevelBeginner": "초급",
+  "learningSelectLevelIntermediate": "중급",
+  "learningSelectModeDescFlashSentenceLearning": "빠른 템포의 플래시 카드로 문장을 반복 연습합니다.",
+  "learningSelectModeDescFlashSentenceTest": "빠른 사이클로 문장 이해와 말하기를 점검합니다.",
+  "learningSelectModeDescFlashWordLearning": "플래시 반복으로 핵심 단어를 빠르게 암기합니다.",
+  "learningSelectModeDescFlashWordTest": "짧은 테스트로 단어 기억을 점검합니다.",
+  "learningSelectModeDescNone": "모드를 선택하면 안내가 표시됩니다.",
+  "learningSelectModeDescSentenceLearning": "발음/힌트와 함께 문장을 단계적으로 학습합니다.",
+  "learningSelectModeDescSentenceTest": "선택형과 말하기로 문장 이해를 검증합니다.",
+  "learningSelectModeFlashSentenceLearning": "플래시 문장 학습",
+  "learningSelectModeFlashSentenceTest": "플래시 문장 테스트",
+  "learningSelectModeFlashWordLearning": "플래시 단어 학습",
+  "learningSelectModeFlashWordTest": "플래시 단어 테스트",
+  "learningSelectModeSentenceLearning": "문장 학습",
+  "learningSelectModeSentenceTest": "문장 테스트",
+  "learningSelectSelectionSummary": "현재 선택: 카테고리 {category} / 레벨 {level} / 모드 {mode}",
+  "@learningSelectSelectionSummary": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "level": {
+        "type": "String"
+      },
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "learningSelectStartNewButton": "새 학습 시작",
+  "learningSelectStarting": "세션을 시작하는 중...",
+  "learningSelectUnselected": "미선택",
+  "loginContinueForDevelopment": "개발용으로 계속하기",
+  "loginFailedWithError": "로그인에 실패했습니다: {error}",
+  "@loginFailedWithError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "loginReleaseNote": "정식 배포에서는 휴대전화 인증이 활성화됩니다.",
+  "reportAuthRequiredBanner": "리포트 제출은 인증된 계정에서만 가능합니다.",
+  "reportChecklistListening": "듣기 학습을 완료했습니다.",
+  "reportChecklistSpeaking": "말하기 학습을 완료했습니다.",
+  "reportChecklistTitle": "세션 체크리스트",
+  "reportGateBlockedMessage": "이번 주 리포트를 제출하기 전까지 학습이 차단됩니다.",
+  "reportGateCurrentStage": "현재 게이트 단계: {stage}",
+  "@reportGateCurrentStage": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "reportGateNextStepsBody": "1) 세션 요약을 확인합니다.\n2) 학습 소감을 작성합니다.\n3) 리포트를 제출하고 관리자 검토를 기다립니다.",
+  "reportGateNextStepsTitle": "다음 단계",
+  "reportGateOpenMessage": "현재는 리포트 제출 의무가 없습니다. 계속 학습할 수 있습니다.",
+  "reportGatePrimaryToPreview": "리포트 프리뷰로 이동",
+  "reportGatePrimaryToSelect": "학습 선택으로 이동",
+  "reportGateRefreshTooltip": "상태 새로고침",
+  "reportGateStatusTitle": "게이트 상태",
+  "reportGateTitle": "리포트 게이트",
+  "reportNoSessionBanner": "활성 세션이 없습니다. 리포트 제출을 진행할 수 없습니다.",
+  "reportPreviewChecklistBody": "1) 오늘 학습 내용을 1~2문장으로 정리합니다.\n2) 듣기/말하기 완료 여부를 확인합니다.\n3) 제출 후 다음 세션을 시작할 수 있습니다.",
+  "reportPreviewChecklistTitle": "제출 전 확인",
+  "reportPreviewContentSet": "콘텐츠 세트: {contentSetId}",
+  "@reportPreviewContentSet": {
+    "placeholders": {
+      "contentSetId": {
+        "type": "String"
+      }
+    }
+  },
+  "reportPreviewLearningMode": "학습 모드: {mode}",
+  "@reportPreviewLearningMode": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "reportPreviewPrimaryToReport": "리포트 작성",
+  "reportPreviewSecondaryToSummary": "요약으로 돌아가기",
+  "reportPreviewSessionId": "세션 ID: {sessionId}",
+  "@reportPreviewSessionId": {
+    "placeholders": {
+      "sessionId": {
+        "type": "String"
+      }
+    }
+  },
+  "reportPreviewSessionInfoTitle": "세션 정보",
+  "reportPreviewSummary": "요약: {summary}",
+  "@reportPreviewSummary": {
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "reportPreviewTitle": "리포트 프리뷰",
+  "reportPrimaryDone": "제출 완료",
+  "reportPrimarySubmit": "리포트 제출",
+  "reportReflectionHint": "학습 소감을 1~2문장으로 작성해 주세요.",
+  "reportReflectionTitle": "학습 소감",
+  "reportSecondaryToSummary": "요약으로 돌아가기",
+  "reportSubmitFailed": "리포트 제출에 실패했습니다. 다시 시도해 주세요.",
+  "reportSubmittedMessage": "리포트를 제출했습니다. 다음 학습을 시작할 수 있습니다.",
+  "reportTitle": "학습 리포트",
+  "sentenceLearningCompleteAndContinue": "완료하고 다음으로",
+  "sentenceLearningHintLabel": "힌트",
+  "sentenceLearningPlaceholder": "문장 학습 콘텐츠를 준비하고 있습니다.",
+  "sentenceLearningProgress": "진행률: {current} / {total}",
+  "@sentenceLearningProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sentenceLearningPronunciationLabel": "발음",
+  "sentenceLearningSessionCompletedMessage": "문장 학습 세션을 완료했습니다.",
+  "sentenceTestChoicePrimaryButton": "말하기 테스트로 이동",
+  "sentenceTestChoiceProgressLabel": "문항 {current} / {total}",
+  "@sentenceTestChoiceProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sentenceTestChoicePromptTitle": "한국어 제시문 보고 선택",
+  "sentenceTestChoiceSubtitle": "한국어 문장에 맞는 태국어 문장을 선택하세요.",
+  "sentenceTestChoiceTitle": "문장 테스트 - 선택형",
+  "sentenceTestSpeakingPrimaryButton": "테스트 종료",
+  "sentenceTestSpeakingProgressLabel": "말하기 {current} / {total}",
+  "@sentenceTestSpeakingProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sentenceTestSpeakingPromptTitle": "말하기 제시문",
+  "sentenceTestSpeakingSubtitle": "제시 문장을 말하고 유사도 점수를 확인하세요.",
+  "sentenceTestSpeakingTitle": "문장 테스트 - 말하기",
+  "speakingDevModePass": "개발 모드에서는 완료 처리됩니다.",
+  "speakingNetworkOrServerFailed": "네트워크/서버 문제로 말하기 평가를 진행하지 못했습니다.",
+  "speakingNoRecordingData": "녹음 데이터가 없습니다. 다시 시도해 주세요.",
+  "speakingOnDeviceSaveFailed": "온디바이스 결과 저장에 실패했습니다. 다시 시도해 주세요.",
+  "speakingOnDeviceSaved": "온디바이스 ASR로 처리되었습니다.",
+  "speakingSelectAsrPolicyFirst": "학습 선택 화면에서 ASR 정책을 먼저 선택해 주세요.",
+  "speakingServerAndOnDeviceUnavailable": "서버와 온디바이스 ASR을 모두 사용할 수 없습니다. {reason}",
+  "@speakingServerAndOnDeviceUnavailable": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "speakingServerOnlyRequiresNetwork": "서버 STT 전용 모드입니다. 네트워크 연결 후 다시 시도해 주세요.",
+  "studyModeBackToSelection": "학습 선택으로 돌아가기",
+  "adminContactLabel": "??? ???",
+  "loginTitle": "??? ???",
+  "loginSubtitle": "???? ?? ?? ??? ?? ?? ????? ?????.",
+  "approvalPendingTitle": "?? ??",
+  "approvalPendingMessage": "???? ???????. ?? ?? ? ??? ??? ?????.",
+  "refreshStatus": "?? ????",
+  "backToLogin": "????? ????",
+  "blockedTitle": "?? ??",
+  "blockedMessage": "?? ??? ?? ?????. ????? ??? ???.",
+  "bootstrapMessage": "?? ??? ???? ????...",
+  "learningBlockedTitle": "?? ?? ??",
+  "learningBlockedMessage": "?? ???? ??? ??? ??? ?? ?????."
+}

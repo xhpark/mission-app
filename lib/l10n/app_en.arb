@@ -1,0 +1,421 @@
+{
+  "@@locale": "en",
+  "appTitle": "Mission Language Learning",
+  "learningSelectTitle": "Learning Selection",
+  "learningSelectSubtitle": "Choose category, level, and study mode to begin.",
+  "startSession": "Start Session",
+  "resumeSession": "Resume Session",
+  "clearSession": "Clear Session",
+  "failedToStartSession": "Failed to start session.",
+  "dismissError": "Dismiss Error",
+  "menuGuide": "Learning Guide",
+  "menuResume": "Resume Session",
+  "menuSignOut": "Sign Out",
+  "categoryLabel": "Category",
+  "levelLabel": "Level",
+  "modeLabel": "Mode",
+  "guideTitle": "Learning Guide",
+  "guideHeroTitle": "Before you begin",
+  "guideHeroSubtitle": "Follow these steps to keep your session focused and consistent.",
+  "guideStart": "Start Learning",
+  "resumeTitle": "Resume Session",
+  "resumeHeader": "Saved Progress Found",
+  "resumeStartNew": "Start New Session",
+  "resumeGoToMode": "Go to Mode",
+  "debugPanelTitle": "QA Debug",
+  "debugRoute": "Route",
+  "debugUserStatus": "User Status",
+  "debugSessionId": "Session ID",
+  "debugContentSetId": "Content Set ID",
+  "interactiveActionError": "An error occurred while processing. Please try again.",
+  "interactiveBackTooltip": "Back",
+  "interactiveProgressTitle": "Progress",
+  "interactiveProgressDescription": "Check your current step and remaining time.",
+  "interactiveRemainingSeconds": "{seconds}s left",
+  "@interactiveRemainingSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "interactivePromptDescription": "Review the sentence and hint, then practice listening and speaking.",
+  "interactiveNativeAudioPause": "Pause native audio",
+  "interactiveNativeAudioPlay": "Play native audio",
+  "interactiveRecordStop": "Stop recording",
+  "interactiveRecordStart": "Start speaking practice",
+  "interactiveMyRecordingListen": "Listen to my recording",
+  "interactiveRecordingGuidanceActive": "Recording in progress. Speak clearly and slowly.",
+  "interactiveRecordingGuidanceIdle": "Press the button to start recording.",
+  "interactiveSimilarityScore": "Similarity score: {score}",
+  "@interactiveSimilarityScore": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "interactiveRecognizedText": "Recognized: {text}",
+  "@interactiveRecognizedText": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "interactiveCorrectFeedback": "Great. That's correct.",
+  "interactiveIncorrectFeedback": "Not quite. Review the hint and try again.",
+  "interactiveSecondaryToSelect": "Back to selection",
+  "interactiveBlockedTimeExpired": "Time is up. Go back and restart.",
+  "interactiveBlockedSelectCorrect": "Select the correct answer to continue.",
+  "interactiveBlockedNeedRecording": "You need at least one recording to continue.",
+  "interactiveBlockedNeedSpeakingPass": "You need to pass speaking validation to continue.",
+  "interactiveNativeAudioPlayFailed": "Failed to play native audio.",
+  "interactiveMyRecordingPlayFailed": "Failed to play your recording.",
+  "interactiveStartRecordingFailed": "Could not start microphone. Check permission.",
+  "interactiveRecordingStatusActive": "Recording in progress.",
+  "interactiveSpeakingPassed": "Speaking validation passed.",
+  "interactiveSpeakingFailed": "Speaking validation did not pass.",
+  "interactiveRecordingProcessFailed": "Recording processing failed.",
+  "sentenceLearningTitle": "Sentence Learning",
+  "sentenceLearningNoSessionMessage": "No active session. Start one from Learning Selection.",
+  "sentenceLearningGoToSelect": "Go to Learning Selection",
+  "sentenceLearningHeroSubtitle": "Practice sentence listening, speaking, and key vocabulary together.",
+  "sentenceLearningSectionTitle": "Learning Sentence",
+  "sentenceLearningSectionDescription": "Study this sentence together with related key words.",
+  "sentenceLearningLoadError": "Could not load sentence. {error}",
+  "@sentenceLearningLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "sentenceLearningAudioNotReady": "Sentence audio is not ready yet.",
+  "sentenceLearningAudioFailed": "Failed to play audio.",
+  "sentenceLearningListenSentence": "Listen to sentence",
+  "sentenceLearningReadWithMyVoice": "Read with my voice",
+  "sentenceLearningKeyWordsTitle": "Key Words",
+  "sentenceLearningGoToSummary": "Go to Session Summary",
+  "sentenceLearningMicPermissionError": "Please check microphone permission.",
+  "sentenceLearningRecordingProcessError": "An error occurred while processing recording.",
+  "sentenceLearningLoading": "Loading sentence...",
+  "sessionSummaryTitle": "Session Summary",
+  "sessionSummaryStatTotalItems": "Total Items",
+  "sessionSummaryStatCompletedItems": "Completed Items",
+  "sessionSummaryStatAccuracy": "Accuracy",
+  "sessionSummaryStatCorrectAnswers": "Correct Answers",
+  "sessionSummaryStatSessionId": "Session ID",
+  "sessionSummarySubtitleNoSession": "The session is complete. Review your results and submit your report.",
+  "sessionSummarySubtitleWithMode": "The {mode} session is complete. Submit your report to unlock the next session.",
+  "@sessionSummarySubtitleWithMode": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "sessionSummaryHeroTitle": "Great work finishing today's learning.",
+  "sessionSummaryResultTitle": "Learning Result",
+  "sessionSummaryResultDescription": "Summary of this session.",
+  "sessionSummaryCoachNote": "Coach note: Your mission sentence pronunciation improved. Keep practicing speaking in the next session too.",
+  "sessionSummaryNextRecommendationTitle": "Next Recommendation",
+  "sessionSummaryNextRecommendationDescription": "Maintain momentum with short repetition practice.",
+  "sessionSummaryNextRecommendationBody": "After submitting your report, the next study session will open. Advanced content is released after admin review.",
+  "sessionSummarySecondaryToSelect": "Back to selection",
+  "sessionSummaryPrimaryToReportPreview": "Go to Report Preview",
+  "loginFailedWithError": "Login failed: {error}",
+  "@loginFailedWithError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "loginContinueForDevelopment": "Continue for Development",
+  "loginReleaseNote": "Phone authentication will be enabled in release.",
+  "studyModeBackToSelection": "Back to Selection",
+  "reportPreviewTitle": "Report Preview",
+  "reportPreviewSessionInfoTitle": "Session Info",
+  "reportPreviewSessionId": "Session ID: {sessionId}",
+  "@reportPreviewSessionId": {
+    "placeholders": {
+      "sessionId": {
+        "type": "String"
+      }
+    }
+  },
+  "reportPreviewContentSet": "Content Set: {contentSetId}",
+  "@reportPreviewContentSet": {
+    "placeholders": {
+      "contentSetId": {
+        "type": "String"
+      }
+    }
+  },
+  "reportPreviewLearningMode": "Learning Mode: {mode}",
+  "@reportPreviewLearningMode": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "reportPreviewSummary": "Summary: {summary}",
+  "@reportPreviewSummary": {
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "reportPreviewChecklistTitle": "Before Submit",
+  "reportPreviewChecklistBody": "1) Summarize today's learning in 1-2 sentences.\n2) Check listening and speaking practice completion.\n3) After submit, you can start the next session.",
+  "reportPreviewSecondaryToSummary": "Back to Summary",
+  "reportPreviewPrimaryToReport": "Write Report",
+  "reportGateTitle": "Report Gate",
+  "reportGateRefreshTooltip": "Refresh Status",
+  "reportGateBlockedMessage": "Learning is blocked until this week's report is submitted.",
+  "reportGateOpenMessage": "No report requirement now. You can continue learning.",
+  "reportGateStatusTitle": "Gate Status",
+  "reportGateCurrentStage": "Current gate stage: {stage}",
+  "@reportGateCurrentStage": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "reportGateNextStepsTitle": "Next Steps",
+  "reportGateNextStepsBody": "1) Review session summary.\n2) Write your reflection.\n3) Submit report and wait for admin review.",
+  "reportGatePrimaryToPreview": "Go to Report Preview",
+  "reportGatePrimaryToSelect": "Go to Selection",
+  "reportTitle": "Learning Report",
+  "reportNoSessionBanner": "No active session. Report submission is unavailable.",
+  "reportAuthRequiredBanner": "Report submission requires an authenticated account.",
+  "reportChecklistTitle": "Session Checklist",
+  "reportChecklistListening": "I completed listening practice.",
+  "reportChecklistSpeaking": "I completed speaking practice.",
+  "reportReflectionTitle": "Learning Reflection",
+  "reportReflectionHint": "Write your reflection in 1-2 sentences.",
+  "reportSubmittedMessage": "Report submitted. You can start the next learning.",
+  "reportSecondaryToSummary": "Back to Summary",
+  "reportPrimaryDone": "Submitted",
+  "reportPrimarySubmit": "Submit Report",
+  "reportSubmitFailed": "Report submission failed. Please try again.",
+  "flashSentenceLearningTitle": "Flash Sentence Learning",
+  "flashSentenceLearningSubtitle": "Build sentence fluency through short repeated cycles.",
+  "flashSentenceLearningProgressLabel": "Sentence {current} / {total}",
+  "@flashSentenceLearningProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "flashSentenceLearningPromptTitle": "Today's Sentence",
+  "flashSentenceLearningPrimaryButton": "Go to Flash Sentence Test",
+  "flashWordLearningTitle": "Flash Word Learning",
+  "flashWordLearningSubtitle": "Build core vocabulary through short repeated cycles.",
+  "flashWordLearningProgressLabel": "Word {current} / {total}",
+  "@flashWordLearningProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "flashWordLearningPromptTitle": "Today's Word",
+  "flashWordLearningPrimaryButton": "Go to Flash Word Test",
+  "sentenceTestChoiceTitle": "Sentence Test - Choice",
+  "sentenceTestChoiceSubtitle": "Select the Thai sentence that matches Korean.",
+  "sentenceTestChoiceProgressLabel": "Question {current} / {total}",
+  "@sentenceTestChoiceProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sentenceTestChoicePromptTitle": "Choose from Korean prompt",
+  "sentenceTestChoicePrimaryButton": "Go to Speaking Test",
+  "flashSentenceTestChoiceTitle": "Flash Sentence Test - Choice",
+  "flashSentenceTestChoiceSubtitle": "Select the Thai sentence that matches Korean.",
+  "flashSentenceTestChoiceProgressLabel": "Question {current} / {total}",
+  "@flashSentenceTestChoiceProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "flashSentenceTestChoicePromptTitle": "Translate Korean to Thai",
+  "flashSentenceTestChoicePrimaryButton": "Go to Speaking Test",
+  "flashWordTestTitle": "Flash Word Test",
+  "flashWordTestSubtitle": "Select the meaning of the Thai word.",
+  "flashWordTestProgressLabel": "Question {current} / {total}",
+  "@flashWordTestProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "flashWordTestPromptTitle": "Check Word Meaning",
+  "flashWordTestPrimaryButton": "Finish Test",
+  "sentenceTestSpeakingTitle": "Sentence Test - Speaking",
+  "sentenceTestSpeakingSubtitle": "Speak the prompt sentence and review your similarity score.",
+  "sentenceTestSpeakingProgressLabel": "Speaking {current} / {total}",
+  "@sentenceTestSpeakingProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sentenceTestSpeakingPromptTitle": "Speaking Prompt",
+  "sentenceTestSpeakingPrimaryButton": "Finish Test",
+  "flashSentenceTestSpeakingTitle": "Flash Sentence Test - Speaking",
+  "flashSentenceTestSpeakingSubtitle": "Speak quickly and review your score.",
+  "flashSentenceTestSpeakingProgressLabel": "Speaking {current} / {total}",
+  "@flashSentenceTestSpeakingProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "flashSentenceTestSpeakingPromptTitle": "Speaking Prompt",
+  "flashSentenceTestSpeakingPrimaryButton": "Done",
+  "speakingNoRecordingData": "No recording data. Please try again.",
+  "speakingDevModePass": "In development mode, this is marked as completed.",
+  "speakingSelectAsrPolicyFirst": "Select ASR policy from learning selection first.",
+  "speakingServerOnlyRequiresNetwork": "Server STT only mode. Connect network and try again.",
+  "speakingNetworkOrServerFailed": "Could not evaluate speech due to network/server issue.",
+  "speakingServerAndOnDeviceUnavailable": "Server and on-device ASR are unavailable. {reason}",
+  "@speakingServerAndOnDeviceUnavailable": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "speakingOnDeviceSaved": "Processed by on-device ASR.",
+  "speakingOnDeviceSaveFailed": "Failed to save on-device result. Try again.",
+  "guidePrinciplesTitle": "Learning & Report Principles",
+  "guideStepsTitle": "Flow Steps",
+  "guidePrinciple1": "Learning content uses bundled sentence, word, and audio data first.",
+  "guidePrinciple2": "Learning history is cumulative and preserved before report submit.",
+  "guidePrinciple3": "If you choose start new, the previous active session is abandoned.",
+  "guidePrinciple4": "Report submission is learner-driven and can be done anytime in session.",
+  "guidePrinciple5": "Retry and sync paths are kept for network and error resilience.",
+  "guideStep1": "Choose category, level, and mode.",
+  "guideStep2": "Proceed sentence/word learning and use resume as needed.",
+  "guideStep3": "Complete tests and review summary.",
+  "guideStep4": "Submit cumulative report at your chosen timing.",
+  "learningSelectActiveSessionTitle": "There is an active learning session.",
+  "learningSelectStartNewButton": "Start New",
+  "learningSelectStarting": "Starting session...",
+  "learningSelectConfirmStartNewTitle": "Start a new learning session?",
+  "learningSelectConfirmStartNewMessage": "Current session will be abandoned. If you want to continue it, cancel and tap resume.",
+  "learningSelectConfirmCancel": "Cancel",
+  "learningSelectConfirmStartNew": "Start New",
+  "learningSelectAsrPolicyTitle": "Speech Recognition Policy",
+  "learningSelectAsrPolicyIntro": "Choose speech recognition mode. You can change it later.",
+  "learningSelectAsrPolicyServerOnly": "Server STT Only",
+  "learningSelectAsrPolicyOffline": "Offline Support",
+  "learningSelectAsrPolicyServerOnlyDesc": "No local model download. Offline evaluation is unavailable.",
+  "learningSelectAsrPolicyOfflineDesc": "With local ASR, speaking evaluation can continue offline.",
+  "learningSelectAsrSyncNow": "Sync Now",
+  "learningSelectAsrPendingSync": "{count} offline results pending sync.",
+  "@learningSelectAsrPendingSync": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "learningSelectAsrNoPendingSync": "No pending offline sync.",
+  "learningSelectCategoryDaily": "Daily Conversation",
+  "learningSelectCategoryMission": "Mission",
+  "learningSelectLevelBeginner": "Beginner",
+  "learningSelectLevelIntermediate": "Intermediate",
+  "learningSelectLevelAdvanced": "Advanced",
+  "learningSelectModeSentenceLearning": "Sentence Learning",
+  "learningSelectModeSentenceTest": "Sentence Test",
+  "learningSelectModeFlashWordLearning": "Flash Word Learning",
+  "learningSelectModeFlashWordTest": "Flash Word Test",
+  "learningSelectModeFlashSentenceLearning": "Flash Sentence Learning",
+  "learningSelectModeFlashSentenceTest": "Flash Sentence Test",
+  "learningSelectUnselected": "Not selected",
+  "learningSelectSelectionSummary": "Current selection: category {category} / level {level} / mode {mode}",
+  "@learningSelectSelectionSummary": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "level": {
+        "type": "String"
+      },
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "learningSelectModeDescSentenceLearning": "Study sentence with pronunciation and hints step by step.",
+  "learningSelectModeDescSentenceTest": "Validate sentence understanding via choice and speaking.",
+  "learningSelectModeDescFlashWordLearning": "Memorize core words quickly with flash repetition.",
+  "learningSelectModeDescFlashWordTest": "Check word memory quickly with short tests.",
+  "learningSelectModeDescFlashSentenceLearning": "Practice sentences with high-tempo flash cards.",
+  "learningSelectModeDescFlashSentenceTest": "Validate sentence comprehension and speaking in quick cycles.",
+  "learningSelectModeDescNone": "Select a mode to see guidance.",
+  "sentenceLearningPlaceholder": "Preparing sentence learning content.",
+  "sentenceLearningPronunciationLabel": "Pronunciation",
+  "sentenceLearningHintLabel": "Hint",
+  "sentenceLearningProgress": "Progress: {current} / {total}",
+  "@sentenceLearningProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sentenceLearningSessionCompletedMessage": "Sentence learning session is complete.",
+  "sentenceLearningCompleteAndContinue": "Complete and Continue",
+  "adminContactLabel": "Admin Contact",
+  "loginTitle": "Learner Login",
+  "loginSubtitle": "Use development mode login until phone auth is enabled.",
+  "approvalPendingTitle": "Approval Pending",
+  "approvalPendingMessage": "Login is complete. Admin approval is required before learning starts.",
+  "refreshStatus": "Refresh Status",
+  "backToLogin": "Back to Login",
+  "blockedTitle": "Access Restricted",
+  "blockedMessage": "This account is currently restricted. Please contact admin.",
+  "bootstrapMessage": "Checking your learning status...",
+  "learningBlockedTitle": "Learning Temporarily Blocked",
+  "learningBlockedMessage": "Learning is paused until mandatory report is submitted."
+}

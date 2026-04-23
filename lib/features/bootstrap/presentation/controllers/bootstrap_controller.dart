@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/firebase/firebase_providers.dart';
@@ -13,7 +15,18 @@ enum BootstrapStatus {
 class BootstrapController extends AsyncNotifier<BootstrapSession> {
   @override
   Future<BootstrapSession> build() async {
-    final authState = await ref.watch(authStateChangesProvider.future);
+    final developmentSession = ref.read(developmentSessionProvider);
+    if (developmentSession) {
+      return BootstrapSession.fallback();
+    }
+
+    final auth = ref.read(firebaseAuthProvider);
+    final currentUser = auth.currentUser;
+    final authState = currentUser ??
+        await ref
+            .watch(authStateChangesProvider.future)
+            .timeout(const Duration(seconds: 5), onTimeout: () => null);
+
     if (authState == null) {
       return BootstrapSession.fallback();
     }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_functions/cloud_functions.dart';
 
 import '../models/bootstrap_session.dart';
@@ -12,7 +14,10 @@ class BootstrapRepository {
     required String deviceId,
   }) async {
     try {
-      final callable = _functions.httpsCallable('bootstrapUserSession');
+      final callable = _functions.httpsCallable(
+        'bootstrapUserSession',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 8)),
+      );
       final response = await callable.call(<String, dynamic>{
         'userId': userId,
         'deviceId': deviceId,
@@ -20,10 +25,12 @@ class BootstrapRepository {
 
       final data = Map<String, dynamic>.from(response.data as Map);
       return BootstrapSession.fromJson(data);
+    } on TimeoutException {
+      return BootstrapSession.fallback();
     } on FirebaseFunctionsException {
-      return BootstrapSession.fallback();
+      rethrow;
     } catch (_) {
-      return BootstrapSession.fallback();
+      rethrow;
     }
   }
 }

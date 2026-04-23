@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-
-import '../../../../app/constants/app_strings.dart';
+import 'package:mission_app/l10n/app_localizations.dart';
 
 class BootstrapScreen extends StatelessWidget {
   const BootstrapScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 20),
-            Text(AppStrings.bootstrapMessage),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 20),
+            Text(l10n?.bootstrapMessage ?? 'Checking your learning status...'),
           ],
         ),
       ),
