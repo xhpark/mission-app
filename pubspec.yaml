@@ -1,5 +1,5 @@
 name: mission_app
-description: "A new Flutter project."
+description: "Thai language learning app (sentence/word study and tests) with learner report submission."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -51,6 +51,7 @@ dependencies:
 
   intl: any
   sherpa_onnx: ^1.12.39
+  firebase_app_check: 0.4.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

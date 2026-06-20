@@ -11,6 +11,8 @@ class SessionRuntimeRepository {
 
   static const _offlineQueueStorageKey = 'speaking.offline_fallback_queue.v1';
   static const _offlineQueueTtl = Duration(days: 7);
+  static const _offlineQueueMaxEntries = 100;
+  static const _directSpeakingAudioMaxBytes = 3 * 1024 * 1024;
   final FirebaseFunctions _functions;
   final FirebaseStorage _storage;
 
@@ -36,6 +38,7 @@ class SessionRuntimeRepository {
     required int selectedIndex,
     required int correctIndex,
     required int elapsedSeconds,
+    String selectedItemId = '',
   }) async {
     final callable = _functions.httpsCallable(
       'submitChoiceTestItem',
@@ -45,6 +48,9 @@ class SessionRuntimeRepository {
       'userId': userId,
       'sessionId': sessionId,
       'itemId': itemId,
+      // selectedItemId is the authoritative grading signal; the indices are kept
+      // for backward compatibility with older deployed functions.
+      'selectedItemId': selectedItemId,
       'selectedIndex': selectedIndex,
       'correctIndex': correctIndex,
       'elapsedSeconds': elapsedSeconds,
@@ -118,6 +124,28 @@ class SessionRuntimeRepository {
     required String mimeType,
     int? durationMs,
   }) async {
+    if (audioBytes.length <= _directSpeakingAudioMaxBytes) {
+      try {
+        return await _callEvaluateSpeakingAttempt(<String, dynamic>{
+          'userId': userId,
+          'sessionId': sessionId,
+          'itemId': itemId,
+          'expectedText': expectedText,
+          'mode': mode,
+          'audioBase64': base64Encode(audioBytes),
+          'mimeType': mimeType,
+          'durationMs': durationMs ?? 0,
+        }, fallbackAudioPath: '');
+      } on FirebaseFunctionsException catch (error) {
+        if (error.code == 'unauthenticated' ||
+            error.code == 'permission-denied') {
+          rethrow;
+        }
+        // Older deployed functions may not accept direct audio payloads yet.
+        // Fall back to the storage-based path so speaking evaluation still works.
+      }
+    }
+
     final objectPath =
         'speaking_attempts/$userId/$sessionId/$itemId-${DateTime.now().millisecondsSinceEpoch}.wav';
     final ref = _storage.ref(objectPath);
@@ -135,19 +163,31 @@ class SessionRuntimeRepository {
       ),
     );
 
+    try {
+      return await _callEvaluateSpeakingAttempt(<String, dynamic>{
+        'userId': userId,
+        'sessionId': sessionId,
+        'itemId': itemId,
+        'expectedText': expectedText,
+        'mode': mode,
+        'audioPath': objectPath,
+        'durationMs': durationMs ?? 0,
+      }, fallbackAudioPath: objectPath);
+    } catch (_) {
+      await ref.delete().catchError((_) {});
+      rethrow;
+    }
+  }
+
+  Future<SpeakingEvaluationResult> _callEvaluateSpeakingAttempt(
+    Map<String, dynamic> payload, {
+    required String fallbackAudioPath,
+  }) async {
     final callable = _functions.httpsCallable(
       'evaluateSpeakingAttempt',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 12)),
     );
-    final response = await callable.call(<String, dynamic>{
-      'userId': userId,
-      'sessionId': sessionId,
-      'itemId': itemId,
-      'expectedText': expectedText,
-      'mode': mode,
-      'audioPath': objectPath,
-      'durationMs': durationMs ?? 0,
-    });
+    final response = await callable.call(payload);
     final data = Map<String, dynamic>.from(response.data as Map);
     return SpeakingEvaluationResult(
       passed: data['passed'] == true,
@@ -155,7 +195,7 @@ class SessionRuntimeRepository {
       transcript: data['transcript'] as String?,
       errorCode: data['errorCode'] as String?,
       message: data['message'] as String?,
-      audioPath: objectPath,
+      audioPath: data['audioPath'] as String? ?? fallbackAudioPath,
     );
   }
 
@@ -349,8 +389,28 @@ class SessionRuntimeRepository {
     List<OfflineSpeakingFallbackEntry> queue,
   ) async {
     final prefs = await SharedPreferences.getInstance();
-    final encoded = jsonEncode(queue.map((entry) => entry.toJson()).toList());
+    final boundedQueue = _trimOfflineQueue(queue);
+    final encoded = jsonEncode(
+      boundedQueue.map((entry) => entry.toJson()).toList(),
+    );
     await prefs.setString(_offlineQueueStorageKey, encoded);
+  }
+
+  static List<OfflineSpeakingFallbackEntry> _trimOfflineQueue(
+    List<OfflineSpeakingFallbackEntry> queue,
+  ) {
+    if (queue.length <= _offlineQueueMaxEntries) {
+      return queue;
+    }
+    return queue.sublist(queue.length - _offlineQueueMaxEntries);
+  }
+
+  static int get offlineQueueMaxEntriesForTesting => _offlineQueueMaxEntries;
+
+  static List<OfflineSpeakingFallbackEntry> trimOfflineQueueForTesting(
+    List<OfflineSpeakingFallbackEntry> queue,
+  ) {
+    return _trimOfflineQueue(queue);
   }
 
   int _calculateSimilarityScore(String expected, String transcript) {

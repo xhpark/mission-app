@@ -364,14 +364,15 @@ const thaiSentenceContents = <ThaiSentenceContent>[
     orderNo: 4,
     koreanText: '\ud558\ub098\ub2d8\uc740 \uc0ac\ub791\uc774\uc2ed\ub2c8\ub2e4',
     thaiText:
-        '\u0e1e\u0e23\u0e30\u0e40\u0e08\u0e49\u0e32\u0e04\u0e37\u0e2d\u0e04\u0e27\u0e32\u0e21\u0e23\u0e31\u0e01',
-    phonetic: 'phr\u00e1-ch\u00e2o khue kwaam-r\u00e1k',
-    hangulPronunciation: '\ud504\ub77c\uc9dc\uc624 \ud06c \ucf70\uc554\ub77d',
+        '\u0e1e\u0e23\u0e30\u0e40\u0e08\u0e49\u0e32\u0e17\u0e23\u0e07\u0e40\u0e1b\u0e47\u0e19\u0e04\u0e27\u0e32\u0e21\u0e23\u0e31\u0e01',
+    phonetic: 'phr\u00e1-ch\u00e2o song-bpen khwaam-r\u00e1k',
+    hangulPronunciation:
+        '\ud504\ub77c\uc9dc\uc624 \uc3ed\ube80 \ucf70\uc554\ub77d',
     englishText: 'God is love',
     hint:
         '\ubcf5\uc74c\uc758 \ud575\uc2ec \uac1c\ub150\uc744 \ub9e4\uc6b0 \uac04\ub2e8\ud558\uac8c \uc804\ub2ec\ud558\ub294 \ubb38\uc7a5\uc774\ub2e4.',
     related:
-        '\u0e1e\u0e23\u0e30\u0e40\u0e08\u0e49\u0e32\u0e04\u0e37\u0e2d\u0e04\u0e27\u0e32\u0e21\u0e23\u0e31\u0e01',
+        '\u0e1e\u0e23\u0e30\u0e40\u0e08\u0e49\u0e32\u0e17\u0e23\u0e07\u0e40\u0e1b\u0e47\u0e19\u0e04\u0e27\u0e32\u0e21\u0e23\u0e31\u0e01',
     cultureNote:
         '\uc124\uba85\ud615 \ubcf5\uc74c \ubb38\uc7a5\uc73c\ub85c \uc801\ud569\ud558\ub2e4.',
   ),
@@ -566,7 +567,8 @@ const thaiWordContents = <ThaiWordContent>[
     id: 'THW_D007',
     category: 'daily',
     orderNo: 7,
-    koreanMeaning: '\uc8c4\uc1a1\ud569\ub2c8\ub2e4, \uc2e4\ub840\ud569\ub2c8\ub2e4',
+    koreanMeaning:
+        '\uc8c4\uc1a1\ud569\ub2c8\ub2e4, \uc2e4\ub840\ud569\ub2c8\ub2e4',
     thaiWord: '\u0e02\u0e2d\u0e42\u0e17\u0e29',
     phonetic: 'kh\u01d2r-th\xf4at',
     hangulPronunciation: '\ucee4\ud1b3',
@@ -696,7 +698,8 @@ const thaiWordContents = <ThaiWordContent>[
     id: 'THW_D017',
     category: 'daily',
     orderNo: 17,
-    koreanMeaning: '\ubd80\ub4dc\ub7ec\uc6b4 \uad8c\uc720/\uc644\ud654 \uc5b4\ubbf8',
+    koreanMeaning:
+        '\ubd80\ub4dc\ub7ec\uc6b4 \uad8c\uc720/\uc644\ud654 \uc5b4\ubbf8',
     thaiWord: '\u0e19\u0e30',
     phonetic: 'n\xe1',
     hangulPronunciation: '\ub098',
@@ -754,7 +757,7 @@ const thaiWordContents = <ThaiWordContent>[
     hangulPronunciation: '\ub9c8\uc774',
     englishMeaning: '',
     wordType: 'word',
-    linkedSentenceIds: '',
+    linkedSentenceIds: 'THS_D004, THS_D008',
     note: '',
   ),
   ThaiWordContent(
@@ -767,7 +770,7 @@ const thaiWordContents = <ThaiWordContent>[
     hangulPronunciation: '\ud39c',
     englishMeaning: '',
     wordType: 'word',
-    linkedSentenceIds: '',
+    linkedSentenceIds: 'THS_D004, THS_D008',
     note: '',
   ),
   ThaiWordContent(
@@ -780,7 +783,7 @@ const thaiWordContents = <ThaiWordContent>[
     hangulPronunciation: '',
     englishMeaning: '',
     wordType: 'word',
-    linkedSentenceIds: '',
+    linkedSentenceIds: 'THS_D004, THS_D008',
     note: '',
   ),
   ThaiWordContent(
@@ -793,7 +796,7 @@ const thaiWordContents = <ThaiWordContent>[
     hangulPronunciation: '\ud3fd',
     englishMeaning: '',
     wordType: 'word',
-    linkedSentenceIds: '',
+    linkedSentenceIds: 'THS_D010',
     note: '',
   ),
   ThaiWordContent(
@@ -806,7 +809,7 @@ const thaiWordContents = <ThaiWordContent>[
     hangulPronunciation: '\uae50',
     englishMeaning: '',
     wordType: 'word',
-    linkedSentenceIds: '',
+    linkedSentenceIds: 'THS_D010',
     note: '',
   ),
   ThaiWordContent(
@@ -819,7 +822,7 @@ const thaiWordContents = <ThaiWordContent>[
     hangulPronunciation: '\ub9c8\uc774',
     englishMeaning: '',
     wordType: 'word',
-    linkedSentenceIds: '',
+    linkedSentenceIds: 'THS_D010',
     note: '',
   ),
   ThaiWordContent(
@@ -875,6 +878,19 @@ const thaiWordContents = <ThaiWordContent>[
     note: '',
   ),
   ThaiWordContent(
+    id: 'THW_D031',
+    category: 'daily',
+    orderNo: 31,
+    koreanMeaning: '\uac10\uc0ac\ud569\ub2c8\ub2e4',
+    thaiWord: '\u0e02\u0e2d\u0e1a\u0e04\u0e38\u0e13',
+    phonetic: 'kh\u00f2p-khun',
+    hangulPronunciation: '\ucf65\ucfe4',
+    englishMeaning: 'thank you',
+    wordType: 'word',
+    linkedSentenceIds: 'THS_D003',
+    note: '\uac10\uc0ac \ud575\uc2ec \ud45c\ud604',
+  ),
+  ThaiWordContent(
     id: 'THW_M001',
     category: 'mission',
     orderNo: 1,
@@ -924,7 +940,8 @@ const thaiWordContents = <ThaiWordContent>[
     englishMeaning: 'honorific helper',
     wordType: 'particle',
     linkedSentenceIds: 'THS_M002',
-    note: '\u0e1e\u0e23\u0e30\u0e40\u0e08\u0e49\u0e32\u0e17\u0e23\u0e07... \uad6c\uc870',
+    note:
+        '\u0e1e\u0e23\u0e30\u0e40\u0e08\u0e49\u0e32\u0e17\u0e23\u0e07... \uad6c\uc870',
   ),
   ThaiWordContent(
     id: 'THW_M005',
@@ -937,7 +954,8 @@ const thaiWordContents = <ThaiWordContent>[
     englishMeaning: 'request / may',
     wordType: 'word',
     linkedSentenceIds: 'THS_M003',
-    note: '\uae30\ub3c4/\ucd95\ubcf5 \ubb38\uc7a5\uc5d0 \uc790\uc8fc \uc4f0\uc784',
+    note:
+        '\uae30\ub3c4/\ucd95\ubcf5 \ubb38\uc7a5\uc5d0 \uc790\uc8fc \uc4f0\uc784',
   ),
   ThaiWordContent(
     id: 'THW_M006',
@@ -1008,7 +1026,8 @@ const thaiWordContents = <ThaiWordContent>[
     id: 'THW_M011',
     category: 'mission',
     orderNo: 11,
-    koreanMeaning: '\uacbd\ud5d8\ud558\ub2e4, ~\ud574\ubcf8 \uc801 \uc788\ub2e4',
+    koreanMeaning:
+        '\uacbd\ud5d8\ud558\ub2e4, ~\ud574\ubcf8 \uc801 \uc788\ub2e4',
     thaiWord: '\u0e40\u0e04\u0e22',
     phonetic: 'khoei',
     hangulPronunciation: '\ucee4\uc774',
@@ -1176,102 +1195,325 @@ ThaiWordContent wordAt(String category, int zeroBasedIndex) {
   return list[index];
 }
 
-List<String> sentenceThaiOptions({
+class ChoiceOptions {
+  const ChoiceOptions({
+    required this.options,
+    required this.correctIndex,
+    this.optionIds = const <String>[],
+    this.optionAudioPaths = const <String>[],
+  });
+
+  final List<String> options;
+  final int correctIndex;
+  final List<String> optionIds;
+  final List<String> optionAudioPaths;
+
+  String optionIdAt(int index, {String fallback = ''}) {
+    if (index < 0 || index >= optionIds.length) {
+      return fallback;
+    }
+    final id = optionIds[index].trim();
+    return id.isEmpty ? fallback : id;
+  }
+
+  String audioPathAt(int index, {String fallback = ''}) {
+    if (index < 0 || index >= optionAudioPaths.length) {
+      return fallback;
+    }
+    final path = optionAudioPaths[index].trim();
+    return path.isEmpty ? fallback : path;
+  }
+}
+
+ChoiceOptions sentenceThaiOptions({
   required String category,
   required int correctIndex,
+  String seedKey = '',
 }) {
   final sentences = sentencesByCategory(category);
   if (sentences.isEmpty) {
-    return const ['No options'];
+    return const ChoiceOptions(options: ['No options'], correctIndex: 0);
   }
 
   final target = sentenceAt(category, correctIndex);
-  final options = <String>[];
-  final seen = <String>{};
-  _appendUniqueOption(
-    options: options,
-    seen: seen,
-    value: target.thaiText,
-    normalizer: _normalizeOptionText,
-  );
+  final distractors = <ThaiSentenceContent>[];
+  final seen = <String>{_normalizeOptionText(target.thaiText)};
 
   for (final candidate in sentences) {
     if (candidate.id == target.id) {
       continue;
     }
-    _appendUniqueOption(
-      options: options,
-      seen: seen,
-      value: candidate.thaiText,
-      normalizer: _normalizeOptionText,
-    );
-    if (options.length == 4) {
-      break;
+    final normalized = _normalizeOptionText(candidate.thaiText);
+    if (normalized.isEmpty || seen.contains(normalized)) {
+      continue;
     }
+    seen.add(normalized);
+    distractors.add(candidate);
   }
-
-  return options;
+  distractors.sort(
+    (a, b) => _stableHash(
+      '$seedKey|${a.id}|${a.thaiText}',
+    ).compareTo(_stableHash('$seedKey|${b.id}|${b.thaiText}')),
+  );
+  final pickedDistractors = distractors.take(3).toList();
+  final optionCount = 1 + pickedDistractors.length;
+  final correctedIndex = _distributedCorrectIndex(
+    optionCount: optionCount,
+    questionIndex: correctIndex,
+    seedKey: seedKey,
+  );
+  final optionSentences = List<ThaiSentenceContent?>.filled(optionCount, null);
+  optionSentences[correctedIndex] = target;
+  var distractorCursor = 0;
+  for (var i = 0; i < optionSentences.length; i++) {
+    if (i == correctedIndex) {
+      continue;
+    }
+    optionSentences[i] = pickedDistractors[distractorCursor++];
+  }
+  final resolvedOptions = optionSentences
+      .whereType<ThaiSentenceContent>()
+      .toList(growable: false);
+  return ChoiceOptions(
+    options: resolvedOptions.map((sentence) => sentence.thaiText).toList(),
+    correctIndex: correctedIndex,
+    optionIds: resolvedOptions.map((sentence) => sentence.id).toList(),
+    optionAudioPaths: resolvedOptions
+        .map((sentence) => sentence.audioPath)
+        .toList(),
+  );
 }
 
-List<String> wordEnglishOptions({
+ChoiceOptions wordThaiOptions({
   required String category,
   required int correctIndex,
+  String seedKey = '',
 }) {
   final words = wordsByCategory(category);
   if (words.isEmpty) {
-    return const ['No options'];
+    return const ChoiceOptions(options: ['No options'], correctIndex: 0);
   }
 
   final target = wordAt(category, correctIndex);
-  final options = <String>[];
-  final seen = <String>{};
-  _appendUniqueOption(
-    options: options,
-    seen: seen,
-    value: _wordMeaningForChoice(target),
-    normalizer: _normalizeOptionText,
-  );
+  final distractors = <ThaiWordContent>[];
+  final seen = <String>{_normalizeOptionText(target.thaiWord)};
 
   for (final candidate in words) {
     if (candidate.id == target.id) {
       continue;
     }
-    _appendUniqueOption(
-      options: options,
-      seen: seen,
-      value: _wordMeaningForChoice(candidate),
-      normalizer: _normalizeOptionText,
-    );
-    if (options.length == 4) {
-      break;
+    final normalized = _normalizeOptionText(candidate.thaiWord);
+    if (normalized.isEmpty || seen.contains(normalized)) {
+      continue;
     }
+    seen.add(normalized);
+    distractors.add(candidate);
   }
-
-  return options;
+  distractors.sort(
+    (a, b) => _stableHash(
+      '$seedKey|${a.id}|${a.thaiWord}',
+    ).compareTo(_stableHash('$seedKey|${b.id}|${b.thaiWord}')),
+  );
+  final pickedDistractors = distractors.take(3).toList();
+  final optionCount = 1 + pickedDistractors.length;
+  final correctedIndex = _distributedCorrectIndex(
+    optionCount: optionCount,
+    questionIndex: correctIndex,
+    seedKey: seedKey,
+  );
+  final optionWords = List<ThaiWordContent?>.filled(optionCount, null);
+  optionWords[correctedIndex] = target;
+  var distractorCursor = 0;
+  for (var i = 0; i < optionWords.length; i++) {
+    if (i == correctedIndex) {
+      continue;
+    }
+    optionWords[i] = pickedDistractors[distractorCursor++];
+  }
+  final resolvedWords = optionWords
+      .whereType<ThaiWordContent>()
+      .toList(growable: false);
+  return ChoiceOptions(
+    options: resolvedWords.map((word) => word.thaiWord).toList(),
+    correctIndex: correctedIndex,
+    optionIds: resolvedWords.map((word) => word.id).toList(),
+    optionAudioPaths: resolvedWords.map((word) => word.audioPath).toList(),
+  );
 }
 
-void _appendUniqueOption({
-  required List<String> options,
-  required Set<String> seen,
-  required String value,
-  required String Function(String input) normalizer,
+int _distributedCorrectIndex({
+  required int optionCount,
+  required int questionIndex,
+  required String seedKey,
 }) {
-  final normalized = normalizer(value);
-  if (normalized.isEmpty || seen.contains(normalized)) {
-    return;
+  if (optionCount <= 1) {
+    return 0;
   }
-  seen.add(normalized);
-  options.add(value);
+  final base = _stableHash(seedKey) % optionCount;
+  return (base + questionIndex) % optionCount;
+}
+
+int _stableHash(String input) {
+  var hash = 17;
+  for (final rune in input.runes) {
+    hash = (hash * 31 + rune) & 0x7fffffff;
+  }
+  return hash;
 }
 
 String _normalizeOptionText(String input) {
   return input.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 }
 
-String _wordMeaningForChoice(ThaiWordContent word) {
-  final english = word.englishMeaning.trim();
-  if (english.isNotEmpty) {
-    return english;
+String formatThaiWithHangul(String thaiText, {String? fallbackHangul}) {
+  final hangul = (fallbackHangul ?? _thaiHangulLookupByToken[thaiText] ?? '')
+      .trim();
+  final source = thaiText.trim();
+  if (hangul.isEmpty || source.isEmpty) {
+    return source;
   }
-  return word.koreanMeaning.trim();
+  return '$hangul ($source)';
+}
+
+String formatThaiSoundChoiceLabel({
+  required String thaiText,
+  String? fallbackHangul,
+  String? fallbackPhonetic,
+}) {
+  final source = thaiText.trim();
+  if (source.isEmpty) {
+    return source;
+  }
+
+  final hangul = (fallbackHangul ?? _thaiHangulLookupByToken[source] ?? '')
+      .trim();
+  final phonetic =
+      (fallbackPhonetic ?? _thaiPhoneticLookupByToken[source] ?? '').trim();
+
+  if (hangul.isNotEmpty && phonetic.isNotEmpty) {
+    return '$hangul ($phonetic)';
+  }
+  if (hangul.isNotEmpty) {
+    return hangul;
+  }
+  if (phonetic.isNotEmpty) {
+    return phonetic;
+  }
+  return source;
+}
+
+String formatThaiTokensForLearners(String input) {
+  if (input.isEmpty) {
+    return input;
+  }
+
+  return input.replaceAllMapped(_thaiTokenRegExp, (match) {
+    final token = match.group(0) ?? '';
+    if (token.isEmpty) {
+      return token;
+    }
+
+    final start = match.start;
+    final end = match.end;
+    final alreadyWrapped =
+        start > 0 &&
+        end < input.length &&
+        input[start - 1] == '(' &&
+        input[end] == ')';
+    if (alreadyWrapped) {
+      return token;
+    }
+
+    final mapped = _thaiHangulLookupByToken[token];
+    if (mapped == null || mapped.trim().isEmpty) {
+      return token;
+    }
+    return '${mapped.trim()} ($token)';
+  });
+}
+
+final RegExp _thaiTokenRegExp = RegExp(r'[\u0E00-\u0E7F]+');
+
+final Map<String, String> _thaiHangulLookupByToken = _buildThaiHangulLookup();
+final Map<String, String> _thaiPhoneticLookupByToken =
+    _buildThaiPhoneticLookup();
+
+Map<String, String> _buildThaiHangulLookup() {
+  final map = <String, String>{};
+
+  for (final word in thaiWordContents) {
+    _putThaiHangulToken(
+      map,
+      token: word.thaiWord,
+      hangul: word.hangulPronunciation,
+    );
+  }
+
+  for (final sentence in thaiSentenceContents) {
+    _putThaiHangulToken(
+      map,
+      token: sentence.thaiText,
+      hangul: sentence.hangulPronunciation,
+    );
+  }
+
+  return map;
+}
+
+Map<String, String> _buildThaiPhoneticLookup() {
+  final map = <String, String>{};
+
+  for (final word in thaiWordContents) {
+    _putThaiMappedToken(map, token: word.thaiWord, mappedValue: word.phonetic);
+  }
+
+  for (final sentence in thaiSentenceContents) {
+    _putThaiMappedToken(
+      map,
+      token: sentence.thaiText,
+      mappedValue: sentence.phonetic,
+    );
+  }
+
+  return map;
+}
+
+void _putThaiHangulToken(
+  Map<String, String> map, {
+  required String token,
+  required String hangul,
+}) {
+  _putThaiMappedToken(map, token: token, mappedValue: hangul);
+}
+
+void _putThaiMappedToken(
+  Map<String, String> map, {
+  required String token,
+  required String mappedValue,
+}) {
+  final thaiTokens = _thaiTokenRegExp
+      .allMatches(token)
+      .map((m) => m.group(0))
+      .whereType<String>();
+  final mappedParts = mappedValue
+      .split(RegExp(r'[/\s]+'))
+      .map((part) => part.trim())
+      .where((part) => part.isNotEmpty)
+      .toList();
+
+  if (thaiTokens.length == 1 && mappedValue.trim().isNotEmpty) {
+    map.putIfAbsent(thaiTokens.first, () => mappedValue.trim());
+    return;
+  }
+
+  var index = 0;
+  for (final thai in thaiTokens) {
+    final mapped = index < mappedParts.length
+        ? mappedParts[index]
+        : (mappedParts.isNotEmpty ? mappedParts.first : '');
+    if (mapped.isNotEmpty && !map.containsKey(thai)) {
+      map[thai] = mapped;
+    }
+    index++;
+  }
 }
