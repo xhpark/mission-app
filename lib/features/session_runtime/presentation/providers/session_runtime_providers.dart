@@ -60,7 +60,10 @@ class SpeakingFallbackSyncWorker extends Notifier<SpeakingFallbackSyncState> {
       ref.onDispose(() {
         _timer?.cancel();
       });
-      unawaited(_bootstrap());
+      // Defer to a microtask so build() returns and the state is initialized
+      // before _bootstrap reads/writes it (refreshPendingCount touches state
+      // before its first await when the user is unauthenticated).
+      unawaited(Future.microtask(_bootstrap));
     }
     return const SpeakingFallbackSyncState(pendingCount: 0, syncing: false);
   }
