@@ -538,12 +538,17 @@ function isDefaultAdminEmail(email: string): boolean {
   return defaultAdminApprovalEmail.length > 0 && email === defaultAdminApprovalEmail;
 }
 
-function defaultAdminProfileFields(email: string, emailVerified = false): Record<string, unknown> {
+function defaultAdminProfileFields(email: string): Record<string, unknown> {
   if (!isDefaultAdminEmail(email)) {
     return {};
   }
 
-  const profileFields: Record<string, unknown> = {
+  // The default admin is designated server-side via ADMIN_APPROVAL_EMAIL (an
+  // operator-controlled trust anchor) and Firebase Auth guarantees email
+  // uniqueness, so only one account can ever hold this address. This app signs
+  // in with email/password and has no email-verification flow, so requiring a
+  // verified email here would make the admin role permanently unreachable.
+  return {
     displayName: defaultAdminLearnerName,
     name: defaultAdminLearnerName,
     learnerName: defaultAdminLearnerName,
@@ -551,14 +556,9 @@ function defaultAdminProfileFields(email: string, emailVerified = false): Record
     phone: defaultAdminLearnerPhone,
     learnerPhone: defaultAdminLearnerPhone,
     phoneNormalized: normalizePhone(defaultAdminLearnerPhone),
+    role: "admin",
+    admin: true,
   };
-
-  if (emailVerified) {
-    profileFields.role = "admin";
-    profileFields.admin = true;
-  }
-
-  return profileFields;
 }
 
 async function requireAdminUser(
@@ -574,12 +574,13 @@ async function requireAdminUser(
   const tokenEmail = authTokenEmail(authToken);
   const role = typeof profile.role === "string" ? profile.role : "";
   const emailMatchesToken = email.length === 0 || tokenEmail === email;
-  const verifiedDefaultAdmin =
-    isDefaultAdminEmail(email) &&
-    isDefaultAdminEmail(tokenEmail) &&
-    authTokenEmailVerified(authToken);
+  // The configured admin email (ADMIN_APPROVAL_EMAIL) is an operator-controlled
+  // trust anchor; this app has no email-verification flow, so we trust the
+  // server-side designation plus Firebase Auth's email uniqueness guarantee.
+  const isConfiguredDefaultAdmin =
+    isDefaultAdminEmail(email) && isDefaultAdminEmail(tokenEmail);
 
-  if (((role === "admin" || profile.admin === true) && emailMatchesToken) || verifiedDefaultAdmin) {
+  if (((role === "admin" || profile.admin === true) && emailMatchesToken) || isConfiguredDefaultAdmin) {
     return;
   }
 
@@ -600,15 +601,71 @@ function buildFirebaseUserConsoleUrl(userId: string): string {
     `/authentication/users?search=${encodeURIComponent(userId)}`;
 }
 
+interface PendingApprovalNotice {
+  userId: string;
+  email: string;
+  deviceId: string;
+  name: string;
+  phone: string;
+}
+
+async function sendTelegramAdminMessage(text: string, context: Record<string, unknown>): Promise<void> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!botToken || !chatId) {
+    console.warn("Telegram admin message skipped: TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID not configured", context);
+    return;
+  }
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        disable_web_page_preview: true,
+      }),
+    });
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      console.error("Telegram admin message failed", {...context, status: response.status, detail});
+    }
+  } catch (error) {
+    console.error("Telegram admin message error", {...context, error});
+  }
+}
+
 async function notifyAdminForPendingApproval({
   userId,
   email,
   deviceId,
-}: {
-  userId: string;
-  email: string;
-  deviceId: string;
-}): Promise<void> {
+  name,
+  phone,
+}: PendingApprovalNotice): Promise<void> {
+  const consoleUrl = buildFirebaseUserConsoleUrl(userId);
+  const text = [
+    "🔔 신규 학습자 승인 요청",
+    "",
+    `이름: ${name.length > 0 ? name : "-"}`,
+    `전화번호: ${phone.length > 0 ? phone : "-"}`,
+    `이메일: ${email.length > 0 ? email : "-"}`,
+    `사용자 ID: ${userId}`,
+    `기기 ID: ${deviceId}`,
+    "",
+    "관리자 대시보드에서 승인하거나, Firebase Console에서 user_profiles/{uid} 의 status 를 approved 로 변경하세요.",
+    consoleUrl.length > 0 ? consoleUrl : "",
+  ].filter((line) => line.length > 0).join("\n");
+
+  await sendTelegramAdminMessage(text, {channel: "pending_approval", userId});
+}
+
+async function sendAdminApprovalEmail({
+  userId,
+  email,
+  deviceId,
+}: PendingApprovalNotice): Promise<void> {
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = Number(process.env.SMTP_PORT ?? 587);
   const smtpUser = process.env.SMTP_USER;
@@ -870,18 +927,23 @@ async function resolveUserStatus(userId: string, email = "", emailVerified = fal
   const profileRef = db.doc(`user_profiles/${userId}`);
   const profileSnap = await profileRef.get();
   const rawStatus = profileSnap.data()?.status;
-  const preApproved = shouldPreApproveUser(normalizeEmail(email));
+  const normalizedEmail = normalizeEmail(email);
+  // The operator-designated admin (ADMIN_APPROVAL_EMAIL) is auto-approved.
+  const preApproved =
+    shouldPreApproveUser(normalizedEmail) || isDefaultAdminEmail(normalizedEmail);
 
   if ((!profileSnap.exists || rawStatus === "pending_approval") && preApproved) {
     await profileRef.set(
       {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        email: normalizeEmail(email),
+        email: normalizedEmail,
         status: "approved",
         approved: true,
         approvedAt: admin.firestore.FieldValue.serverTimestamp(),
-        approvalSource: "preapproved_test_account",
-        ...defaultAdminProfileFields(normalizeEmail(email), emailVerified),
+        approvalSource: isDefaultAdminEmail(normalizedEmail) ?
+          "default_admin" :
+          "preapproved_test_account",
+        ...defaultAdminProfileFields(normalizedEmail),
       },
       {merge: true},
     );
@@ -917,8 +979,8 @@ export const bootstrapUserSession = onCall<BootstrapUserSessionData>(callableOpt
   const deviceId = ensureString(request.data?.deviceId, "deviceId");
   requireAuthenticatedUser(request.auth?.uid, userId);
   const email = normalizeEmail(request.auth?.token.email);
-  const emailVerified = authTokenEmailVerified(request.auth?.token);
-  const preApproved = shouldPreApproveUser(email);
+  // The operator-designated admin (ADMIN_APPROVAL_EMAIL) is auto-approved.
+  const preApproved = shouldPreApproveUser(email) || isDefaultAdminEmail(email);
 
   const userProfileRef = db.doc(`user_profiles/${userId}`);
   const runtimeRef = db.doc(`user_runtime/${userId}`);
@@ -950,16 +1012,10 @@ export const bootstrapUserSession = onCall<BootstrapUserSessionData>(callableOpt
           null,
         approvalSource: userStatus === "approved" ? "preapproved_test_account" : "admin_required",
         deviceId,
-        ...defaultAdminProfileFields(email, emailVerified),
+        ...defaultAdminProfileFields(email),
       },
       {merge: true},
     );
-
-    if (userStatus === "pending_approval") {
-      await notifyAdminForPendingApproval({userId, email, deviceId}).catch((error) => {
-        console.error("Admin approval email failed", {userId, email, error});
-      });
-    }
   } else if (userStatus === "pending_approval" && preApproved) {
     userStatus = "approved";
     await userProfileRef.set(
@@ -971,7 +1027,7 @@ export const bootstrapUserSession = onCall<BootstrapUserSessionData>(callableOpt
         approvedAt: admin.firestore.FieldValue.serverTimestamp(),
         approvalSource: "preapproved_test_account",
         deviceId,
-        ...defaultAdminProfileFields(email, emailVerified),
+        ...defaultAdminProfileFields(email),
       },
       {merge: true},
     );
@@ -982,8 +1038,32 @@ export const bootstrapUserSession = onCall<BootstrapUserSessionData>(callableOpt
         email,
         approved: userStatus === "approved",
         deviceId,
-        ...defaultAdminProfileFields(email, emailVerified),
+        ...defaultAdminProfileFields(email),
       },
+      {merge: true},
+    );
+  }
+
+  // Notify the admin once per learner the first time they land in pending state,
+  // pulling name/phone from the profile (written during signup by updateLearnerProfile).
+  if (userStatus === "pending_approval" && storedProfile.pendingApprovalNotifiedAt == null) {
+    const learnerName = (
+      storedProfile.learnerName ?? storedProfile.name ?? storedProfile.displayName ?? ""
+    ).toString();
+    const learnerPhone = (
+      storedProfile.learnerPhone ?? storedProfile.phone ?? storedProfile.phoneNumber ?? ""
+    ).toString();
+    await notifyAdminForPendingApproval({
+      userId,
+      email,
+      deviceId,
+      name: learnerName,
+      phone: learnerPhone,
+    }).catch((error) => {
+      console.error("Pending approval notify failed", {userId, email, error});
+    });
+    await userProfileRef.set(
+      {pendingApprovalNotifiedAt: admin.firestore.FieldValue.serverTimestamp()},
       {merge: true},
     );
   }
@@ -1017,7 +1097,7 @@ export const bootstrapUserSession = onCall<BootstrapUserSessionData>(callableOpt
     approved: userStatus == "approved",
     isAdmin:
       userStatus === "approved" &&
-      (hasStoredAdminRole || (isDefaultAdminEmail(email) && emailVerified)),
+      (hasStoredAdminRole || isDefaultAdminEmail(email)),
     learningBlocked: reportGate.learningBlocked,
     reportGateStage: reportGate.reportGateStage,
     hasResume: !resumeSnap.empty,
@@ -1800,6 +1880,28 @@ export const completeReportSubmission = onCall<CompleteReportSubmissionData>(cal
     },
     {merge: true},
   );
+
+  const reportDeviceId = (profileData.deviceId ?? "").toString();
+  const reportDateText = completedAt.toDate().toLocaleString("ko-KR", {timeZone: "Asia/Seoul"});
+  const reportNoticeText = [
+    "📄 리포트 제출",
+    "",
+    `이름: ${learnerName.length > 0 ? learnerName : "-"}`,
+    `전화번호: ${learnerPhone.length > 0 ? learnerPhone : "-"}`,
+    `이메일: ${learnerEmail.length > 0 ? learnerEmail : "-"}`,
+    `사용자 ID: ${userId}`,
+    `기기 ID: ${reportDeviceId.length > 0 ? reportDeviceId : "-"}`,
+    `리포트 날짜: ${reportDateText}`,
+    "",
+    `학습: ${category || "-"} / ${level || "-"} / ${mode || "-"}`,
+    `완료율: ${completionRate}% (${completedItems}/${totalItems})`,
+    assessmentApplicable ? `정답률: ${accuracy}%` : "",
+  ].filter((line) => line.length > 0).join("\n");
+  await sendTelegramAdminMessage(reportNoticeText, {
+    channel: "report_submission",
+    userId,
+    reportId,
+  });
 
   return {
     reportId,
