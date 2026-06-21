@@ -73,6 +73,10 @@ class LearningSelectScreen extends ConsumerWidget {
                     value: _SelectMenuAction.adminDashboard,
                     child: Text('관리자 대시보드'),
                   ),
+                const PopupMenuItem(
+                  value: _SelectMenuAction.myHistory,
+                  child: Text('내 학습 기록'),
+                ),
                 PopupMenuItem(
                   value: _SelectMenuAction.guide,
                   child: Text(l10n?.menuGuide ?? '학습 가이드'),
@@ -260,6 +264,8 @@ class LearningSelectScreen extends ConsumerWidget {
     switch (value) {
       case _SelectMenuAction.adminDashboard:
         context.go('/admin-dashboard');
+      case _SelectMenuAction.myHistory:
+        context.go('/my-history');
       case _SelectMenuAction.guide:
         context.go('/guide');
       case _SelectMenuAction.resume:
@@ -382,7 +388,7 @@ class LearningSelectScreen extends ConsumerWidget {
   }
 }
 
-enum _SelectMenuAction { adminDashboard, guide, resume, signOut }
+enum _SelectMenuAction { adminDashboard, myHistory, guide, resume, signOut }
 
 enum _StartActionChoice { resume, startNew }
 

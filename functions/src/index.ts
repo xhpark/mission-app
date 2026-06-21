@@ -1913,6 +1913,140 @@ export const completeReportSubmission = onCall<CompleteReportSubmissionData>(cal
   };
 });
 
+// Learner-facing history: a learner reads only their own records, but ranks are
+// computed server-side because Firestore rules forbid reading other learners.
+export const getLearnerHistory = onCall(callableOptions, async (request) => {
+  const userId = ensureString(request.data?.userId, "userId");
+  requireAuthenticatedUser(request.auth?.uid, userId);
+
+  const summaryRef = db.doc(`user_learning_summary/${userId}`);
+  const reportsQuery = db
+    .collection(`reports/${userId}/report_history`)
+    .orderBy("submittedAt", "desc")
+    .limit(30);
+  const allSummariesQuery = db.collection("user_learning_summary");
+
+  const [summarySnap, reportsSnap, allSummariesSnap] = await Promise.all([
+    summaryRef.get(),
+    reportsQuery.get(),
+    allSummariesQuery.get(),
+  ]);
+
+  const data = summarySnap.data() ?? {};
+  const cumulativeDurationSeconds = safeNumber(data.cumulativeDurationSeconds);
+  const myCompletedItems = safeNumber(data.cumulativeCompletedItems);
+  const myAverageSimilarity = nullableSafeNumber(data.cumulativeAverageSimilarity);
+
+  const summary = {
+    sessions: safeNumber(data.cumulativeSessions),
+    completedItems: myCompletedItems,
+    possibleItems: safeNumber(data.cumulativePossibleItems),
+    durationMinutes: Math.round(cumulativeDurationSeconds / 60),
+    accuracy: nullableSafeNumber(data.cumulativeAccuracy),
+    averageSimilarity: myAverageSimilarity,
+    completionAverage: nullableSafeNumber(data.cumulativeCompletionAverage),
+    speakingPassRate: nullableSafeNumber(data.cumulativeSpeakingPassRate),
+    latestAccuracy: nullableSafeNumber(data.latestAccuracy),
+    latestAverageSimilarity: nullableSafeNumber(data.latestAverageSimilarity),
+  };
+
+  const reports = reportsSnap.docs.map((doc) => {
+    const r = doc.data() as Record<string, unknown>;
+    return {
+      reportId: (r.reportId ?? doc.id).toString(),
+      submittedAt: timestampToIso(r.submittedAt),
+      dateKey: (r.dateKey ?? "").toString(),
+      category: (r.category ?? "").toString(),
+      level: (r.level ?? "").toString(),
+      mode: (r.mode ?? "").toString(),
+      modeGroup: (r.modeGroup ?? "").toString(),
+      totalItems: safeNumber(r.totalItems),
+      completedItems: safeNumber(r.completedItems),
+      completionRate: nullableSafeNumber(r.completionRate),
+      accuracy: nullableSafeNumber(r.accuracy),
+      averageSimilarity: nullableSafeNumber(r.averageSimilarity),
+      durationMinutes: safeNumber(r.durationMinutes),
+      speakingAttemptCount: safeNumber(r.speakingAttemptCount),
+      speakingPassedCount: safeNumber(r.speakingPassedCount),
+      speakingPassRate: nullableSafeNumber(r.speakingPassRate),
+      sttFailureCount: safeNumber(r.sttFailureCount),
+    };
+  });
+
+  // Speaking-focused subset (reports that actually had a speaking attempt).
+  const speaking = reports
+    .filter((r) => r.speakingAttemptCount > 0)
+    .map((r) => ({
+      reportId: r.reportId,
+      submittedAt: r.submittedAt,
+      dateKey: r.dateKey,
+      category: r.category,
+      level: r.level,
+      attemptCount: r.speakingAttemptCount,
+      passedCount: r.speakingPassedCount,
+      passRate: r.speakingPassRate,
+      averageSimilarity: r.averageSimilarity,
+      sttFailureCount: r.sttFailureCount,
+    }));
+
+  const dailyStats = (data.dailyStats ?? {}) as Record<string, Record<string, unknown>>;
+  const dailyTrend = Object.entries(dailyStats)
+    .map(([dateKey, value]) => ({
+      dateKey,
+      sessions: safeNumber(value?.sessions),
+      completedItems: safeNumber(value?.completedItems),
+      durationMinutes: Math.round(safeNumber(value?.durationSeconds) / 60),
+    }))
+    .sort((a, b) => b.dateKey.localeCompare(a.dateKey))
+    .slice(0, 14);
+
+  const weeklyStats = (data.weeklyStats ?? {}) as Record<string, Record<string, unknown>>;
+  const weeklyTrend = Object.entries(weeklyStats)
+    .map(([weekKey, value]) => ({
+      weekKey,
+      sessions: safeNumber(value?.sessions),
+      completedItems: safeNumber(value?.completedItems),
+      durationMinutes: Math.round(safeNumber(value?.durationSeconds) / 60),
+    }))
+    .sort((a, b) => b.weekKey.localeCompare(a.weekKey))
+    .slice(0, 8);
+
+  const allLearners = allSummariesSnap.docs.map((doc) => ({
+    userId: doc.id,
+    completedItems: safeNumber(doc.data().cumulativeCompletedItems),
+    similarity: nullableSafeNumber(doc.data().cumulativeAverageSimilarity),
+  }));
+  const totalLearners = allLearners.length;
+
+  const sortedByVolume = [...allLearners].sort((a, b) => b.completedItems - a.completedItems);
+  const volumeIndex = sortedByVolume.findIndex((l) => l.userId === userId);
+  const learningVolumeRank = volumeIndex >= 0 ? volumeIndex + 1 : null;
+
+  const withSimilarity = allLearners.filter((l) => l.similarity !== null);
+  const sortedBySimilarity = [...withSimilarity].sort(
+    (a, b) => (b.similarity ?? 0) - (a.similarity ?? 0),
+  );
+  const similarityIndex = sortedBySimilarity.findIndex((l) => l.userId === userId);
+  const similarityRank = similarityIndex >= 0 ? similarityIndex + 1 : null;
+
+  return {
+    generatedAt: new Date().toISOString(),
+    summary,
+    reports,
+    speaking,
+    dailyTrend,
+    weeklyTrend,
+    ranking: {
+      totalLearners,
+      learningVolumeRank,
+      myCompletedItems,
+      similarityRank,
+      similarityRankTotal: withSimilarity.length,
+      myAverageSimilarity,
+    },
+  };
+});
+
 export const getAdminDashboard = onCall<AdminDashboardData>(callableOptions, async (request) => {
   const adminUserId = ensureString(request.data?.adminUserId, "adminUserId");
   await requireAdminUser(request.auth?.uid, request.auth?.token, adminUserId);

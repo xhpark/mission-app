@@ -15,6 +15,7 @@ import '../../features/flash_sentence_test/presentation/screens/flash_sentence_t
 import '../../features/flash_sentence_test/presentation/screens/flash_sentence_test_select_screen.dart';
 import '../../features/flash_sentence_test/presentation/screens/flash_sentence_test_speaking_screen.dart';
 import '../../features/flash_word_learning/presentation/screens/flash_word_learning_screen.dart';
+import '../../features/learner_history/presentation/screens/learner_history_screen.dart';
 import '../../features/flash_word_test/presentation/screens/flash_word_test_select_screen.dart';
 import '../../features/flash_word_test/presentation/screens/flash_word_test_speaking_screen.dart';
 import '../../features/flash_word_test/presentation/screens/flash_word_test_screen.dart';
@@ -108,6 +109,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin-dashboard',
         builder: (_, _) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/my-history',
+        builder: (_, _) => const LearnerHistoryScreen(),
       ),
     ],
     redirect: (context, state) {
