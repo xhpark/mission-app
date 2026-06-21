@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:cloud_functions/cloud_functions.dart';
 
 import '../models/study_session_result.dart';
@@ -15,6 +13,7 @@ class StudySessionRepository {
     required String category,
     required String level,
     required String mode,
+    required int totalItems,
   }) async {
     try {
       final callable = _functions.httpsCallable(
@@ -27,12 +26,11 @@ class StudySessionRepository {
         'category': category,
         'level': level,
         'mode': mode,
+        'totalItems': totalItems,
       });
 
       final data = Map<String, dynamic>.from(response.data as Map);
       return StudySessionResult.fromJson(data);
-    } on TimeoutException {
-      return StudySessionResult.fallback();
     } on FirebaseFunctionsException {
       rethrow;
     } catch (_) {

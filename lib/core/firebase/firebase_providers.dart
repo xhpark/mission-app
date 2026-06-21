@@ -12,7 +12,13 @@ final authStateChangesProvider = StreamProvider<User?>((ref) {
   return ref.watch(firebaseAuthProvider).authStateChanges();
 });
 
-final developmentSessionProvider = NotifierProvider<DevelopmentSession, bool>(DevelopmentSession.new);
+final idTokenChangesProvider = StreamProvider<User?>((ref) {
+  return ref.watch(firebaseAuthProvider).idTokenChanges();
+});
+
+final developmentSessionProvider = NotifierProvider<DevelopmentSession, bool>(
+  DevelopmentSession.new,
+);
 
 class DevelopmentSession extends Notifier<bool> {
   static const _storageKey = 'development_session.enabled';

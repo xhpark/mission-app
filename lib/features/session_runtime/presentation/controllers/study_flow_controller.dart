@@ -1,4 +1,8 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum StudyFlowTrack {
   sentenceLearning,
@@ -6,6 +10,7 @@ enum StudyFlowTrack {
   sentenceTestSpeaking,
   flashWordLearning,
   flashWordTest,
+  flashWordTestSpeaking,
   flashSentenceLearning,
   flashSentenceTestChoice,
   flashSentenceTestSpeaking,
@@ -19,6 +24,7 @@ class StudyFlowState {
     required this.correctAnswers,
     required this.attemptedAnswers,
     required this.trackIndices,
+    required this.speakingSimilarityByItemId,
   });
 
   final String sessionId;
@@ -27,8 +33,20 @@ class StudyFlowState {
   final int correctAnswers;
   final int attemptedAnswers;
   final Map<StudyFlowTrack, int> trackIndices;
+  final Map<String, int> speakingSimilarityByItemId;
 
   int indexOf(StudyFlowTrack track) => trackIndices[track] ?? 0;
+
+  int? get averageSimilarityScore {
+    if (speakingSimilarityByItemId.isEmpty) {
+      return null;
+    }
+    final total = speakingSimilarityByItemId.values.fold<int>(
+      0,
+      (sum, value) => sum + value,
+    );
+    return (total / speakingSimilarityByItemId.length).round();
+  }
 
   StudyFlowState copyWith({
     String? sessionId,
@@ -37,6 +55,7 @@ class StudyFlowState {
     int? correctAnswers,
     int? attemptedAnswers,
     Map<StudyFlowTrack, int>? trackIndices,
+    Map<String, int>? speakingSimilarityByItemId,
   }) {
     return StudyFlowState(
       sessionId: sessionId ?? this.sessionId,
@@ -45,6 +64,61 @@ class StudyFlowState {
       correctAnswers: correctAnswers ?? this.correctAnswers,
       attemptedAnswers: attemptedAnswers ?? this.attemptedAnswers,
       trackIndices: trackIndices ?? this.trackIndices,
+      speakingSimilarityByItemId:
+          speakingSimilarityByItemId ?? this.speakingSimilarityByItemId,
+    );
+  }
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'sessionId': sessionId,
+      'totalItems': totalItems,
+      'completedItems': completedItems,
+      'correctAnswers': correctAnswers,
+      'attemptedAnswers': attemptedAnswers,
+      'trackIndices': trackIndices.map(
+        (track, index) => MapEntry(track.name, index),
+      ),
+      'speakingSimilarityByItemId': speakingSimilarityByItemId,
+    };
+  }
+
+  static StudyFlowState fromJson(Map<String, Object?> json) {
+    final rawTrackIndices = json['trackIndices'];
+    final trackIndices = <StudyFlowTrack, int>{};
+    if (rawTrackIndices is Map) {
+      for (final entry in rawTrackIndices.entries) {
+        final track = StudyFlowTrack.values.cast<StudyFlowTrack?>().firstWhere(
+          (value) => value?.name == entry.key,
+          orElse: () => null,
+        );
+        final value = entry.value;
+        if (track != null && value is num) {
+          trackIndices[track] = value.toInt();
+        }
+      }
+    }
+
+    final rawSimilarity = json['speakingSimilarityByItemId'];
+    final speakingSimilarityByItemId = <String, int>{};
+    if (rawSimilarity is Map) {
+      for (final entry in rawSimilarity.entries) {
+        final key = entry.key;
+        final value = entry.value;
+        if (key is String && value is num) {
+          speakingSimilarityByItemId[key] = value.toInt().clamp(0, 100);
+        }
+      }
+    }
+
+    return StudyFlowState(
+      sessionId: json['sessionId'] as String? ?? '',
+      totalItems: (json['totalItems'] as num?)?.toInt() ?? 0,
+      completedItems: (json['completedItems'] as num?)?.toInt() ?? 0,
+      correctAnswers: (json['correctAnswers'] as num?)?.toInt() ?? 0,
+      attemptedAnswers: (json['attemptedAnswers'] as num?)?.toInt() ?? 0,
+      trackIndices: trackIndices,
+      speakingSimilarityByItemId: speakingSimilarityByItemId,
     );
   }
 
@@ -55,17 +129,27 @@ class StudyFlowState {
     correctAnswers: 0,
     attemptedAnswers: 0,
     trackIndices: <StudyFlowTrack, int>{},
+    speakingSimilarityByItemId: <String, int>{},
   );
 }
 
 class StudyFlowController extends Notifier<StudyFlowState> {
-  @override
-  StudyFlowState build() => StudyFlowState.empty;
+  static const _lastSessionIdKey = 'study_flow.last_session_id';
+  static const _sessionKeyPrefix = 'study_flow.session.';
 
-  void startSession({
-    required String sessionId,
-    required int totalItems,
-  }) {
+  bool _hydrated = false;
+  Future<void> _persistQueue = Future<void>.value();
+
+  @override
+  StudyFlowState build() {
+    if (!_hydrated) {
+      _hydrated = true;
+      unawaited(_hydrate());
+    }
+    return StudyFlowState.empty;
+  }
+
+  void startSession({required String sessionId, required int totalItems}) {
     state = StudyFlowState(
       sessionId: sessionId,
       totalItems: totalItems,
@@ -73,11 +157,15 @@ class StudyFlowController extends Notifier<StudyFlowState> {
       correctAnswers: 0,
       attemptedAnswers: 0,
       trackIndices: const <StudyFlowTrack, int>{},
+      speakingSimilarityByItemId: const <String, int>{},
     );
+    unawaited(persistNow());
   }
 
   void clear() {
+    final previousSessionId = state.sessionId;
     state = StudyFlowState.empty;
+    unawaited(_clearPersisted(previousSessionId));
   }
 
   int indexOf(StudyFlowTrack track) => state.indexOf(track);
@@ -104,15 +192,100 @@ class StudyFlowController extends Notifier<StudyFlowState> {
       attemptedAnswers: countAsAttempt
           ? state.attemptedAnswers + 1
           : state.attemptedAnswers,
-      correctAnswers:
-          isCorrectAttempt ? state.correctAnswers + 1 : state.correctAnswers,
+      correctAnswers: isCorrectAttempt
+          ? state.correctAnswers + 1
+          : state.correctAnswers,
     );
+    unawaited(persistNow());
 
     return hasNext;
+  }
+
+  bool retreatTrack({required StudyFlowTrack track}) {
+    final current = state.indexOf(track);
+    if (current <= 0) {
+      return false;
+    }
+
+    final updatedIndices = Map<StudyFlowTrack, int>.from(state.trackIndices)
+      ..[track] = current - 1;
+    state = state.copyWith(trackIndices: updatedIndices);
+    unawaited(persistNow());
+    return true;
+  }
+
+  void resetTrack({required StudyFlowTrack track}) {
+    final updatedIndices = Map<StudyFlowTrack, int>.from(state.trackIndices)
+      ..[track] = 0;
+    state = state.copyWith(trackIndices: updatedIndices);
+    unawaited(persistNow());
+  }
+
+  void recordSpeakingSimilarity({required String itemId, required int score}) {
+    final normalizedScore = score.clamp(0, 100);
+    final updated = Map<String, int>.from(state.speakingSimilarityByItemId)
+      ..[itemId] = normalizedScore;
+    state = state.copyWith(speakingSimilarityByItemId: updated);
+    unawaited(persistNow());
+  }
+
+  Future<void> persistNow() {
+    final snapshot = state;
+    _persistQueue = _persistQueue.then((_) => _persistSnapshot(snapshot));
+    return _persistQueue;
+  }
+
+  Future<void> _persistSnapshot(StudyFlowState snapshot) async {
+    if (snapshot.sessionId.isEmpty) {
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lastSessionIdKey, snapshot.sessionId);
+    await prefs.setString(
+      '$_sessionKeyPrefix${snapshot.sessionId}',
+      jsonEncode(snapshot.toJson()),
+    );
+  }
+
+  Future<void> _hydrate() async {
+    final prefs = await SharedPreferences.getInstance();
+    final sessionId = prefs.getString(_lastSessionIdKey);
+    if (sessionId == null || sessionId.isEmpty) {
+      return;
+    }
+    final raw = prefs.getString('$_sessionKeyPrefix$sessionId');
+    if (raw == null || raw.isEmpty) {
+      return;
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) {
+        return;
+      }
+      final hydratedState = StudyFlowState.fromJson(
+        Map<String, Object?>.from(decoded),
+      );
+      if (hydratedState.sessionId.isNotEmpty) {
+        state = hydratedState;
+      }
+    } catch (_) {
+      await _clearPersisted(sessionId);
+    }
+  }
+
+  Future<void> _clearPersisted(String sessionId) {
+    _persistQueue = _persistQueue.then((_) async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_lastSessionIdKey);
+      if (sessionId.isNotEmpty) {
+        await prefs.remove('$_sessionKeyPrefix$sessionId');
+      }
+    });
+    return _persistQueue;
   }
 }
 
 final studyFlowControllerProvider =
     NotifierProvider<StudyFlowController, StudyFlowState>(
-  StudyFlowController.new,
-);
+      StudyFlowController.new,
+    );

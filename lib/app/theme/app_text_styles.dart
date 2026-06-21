@@ -2,24 +2,27 @@ import 'package:flutter/material.dart';
 
 class AppTextStyles {
   static const heading = TextStyle(
-    fontSize: 28,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.4,
+    fontSize: 30,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.5,
+    height: 1.22,
   );
 
   static const title = TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.w600,
-    height: 1.3,
+    fontSize: 23,
+    fontWeight: FontWeight.w700,
+    height: 1.32,
   );
 
   static const body = TextStyle(
     fontSize: 20,
-    height: 1.5,
+    fontWeight: FontWeight.w500,
+    height: 1.55,
   );
 
   static const bodySmall = TextStyle(
-    fontSize: 16,
+    fontSize: 17,
+    fontWeight: FontWeight.w500,
     height: 1.5,
   );
 }

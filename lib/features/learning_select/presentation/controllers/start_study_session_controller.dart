@@ -61,6 +61,7 @@ class StartStudySessionController extends AsyncNotifier<StudySessionResult?> {
               category: _categoryValue(selection.category!),
               level: _levelValue(selection.level!),
               mode: _modeValue(selection.mode!),
+              totalItems: fallbackTotalItems,
             )
             .timeout(const Duration(seconds: 10));
       } on TimeoutException {
@@ -127,14 +128,9 @@ class StartStudySessionController extends AsyncNotifier<StudySessionResult?> {
       };
 
   String _resolveContentSetId(
-    String? activeContentSetId,
+    String? _,
     LearningSelectionState selection,
   ) {
-    final normalized = activeContentSetId?.trim() ?? '';
-    if (normalized.isNotEmpty) {
-      return normalized;
-    }
-
     final category = _categoryValue(selection.category!);
     final level = _levelValue(selection.level!);
     return '$category-$level-default';

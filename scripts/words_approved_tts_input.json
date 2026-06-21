@@ -17,7 +17,7 @@
     "note",
     "sourceFile"
   ],
-  "totalItems": 46,
+  "totalItems": 47,
   "items": [
     {
       "rowNo": 2,
@@ -432,6 +432,15 @@
       "orderNo": "16",
       "koreanMeaning": "노래하다",
       "sourceFile": "thai_upload_bundle_final_v2.xlsx"
+    },
+    {
+      "rowNo": 48,
+      "wordId": "THW_D031",
+      "thaiWord": "ขอบคุณ",
+      "category": "daily",
+      "orderNo": "31",
+      "koreanMeaning": "감사합니다",
+      "sourceFile": "thai_upload_bundle_final_v2.words_approved_rebuilt.xlsx"
     }
   ]
 }

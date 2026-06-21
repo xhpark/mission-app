@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:mission_app/l10n/app_localizations.dart';
 
 import '../../../../core/widgets/app_bottom_action_bar.dart';
-import '../../../../core/widgets/app_hero_header.dart';
 import '../../../../core/widgets/app_section_card.dart';
 import '../../../sentence_learning/presentation/controllers/current_study_session_controller.dart';
 import '../../domain/study_mode_route_resolver.dart';
@@ -49,12 +48,6 @@ class LearningGuideScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          AppHeroHeader(
-            title: l10n?.guideHeroTitle ?? 'Before you begin',
-            subtitle:
-                l10n?.guideHeroSubtitle ?? 'The principles below are guidance.',
-          ),
-          const SizedBox(height: 16),
           AppSectionCard(
             title: l10n?.guidePrinciplesTitle ?? 'Learning & Report Principles',
             child: Column(

@@ -281,7 +281,7 @@ abstract class AppLocalizations {
   /// No description provided for @interactiveProgressDescription.
   ///
   /// In en, this message translates to:
-  /// **'Check your current step and remaining time.'**
+  /// **'Check your current step and progress.'**
   String get interactiveProgressDescription;
 
   /// No description provided for @interactiveRemainingSeconds.
@@ -560,6 +560,12 @@ abstract class AppLocalizations {
   /// **'Correct Answers'**
   String get sessionSummaryStatCorrectAnswers;
 
+  /// No description provided for @sessionSummaryStatAverageSimilarity.
+  ///
+  /// In en, this message translates to:
+  /// **'Average Similarity'**
+  String get sessionSummaryStatAverageSimilarity;
+
   /// No description provided for @sessionSummaryStatSessionId.
   ///
   /// In en, this message translates to:
@@ -596,29 +602,17 @@ abstract class AppLocalizations {
   /// **'Summary of this session.'**
   String get sessionSummaryResultDescription;
 
-  /// No description provided for @sessionSummaryCoachNote.
+  /// No description provided for @sessionSummaryReportRecommendationTitle.
   ///
   /// In en, this message translates to:
-  /// **'Coach note: Your mission sentence pronunciation improved. Keep practicing speaking in the next session too.'**
-  String get sessionSummaryCoachNote;
+  /// **'Report Recommendation'**
+  String get sessionSummaryReportRecommendationTitle;
 
-  /// No description provided for @sessionSummaryNextRecommendationTitle.
+  /// No description provided for @sessionSummaryReportRecommendationBody.
   ///
   /// In en, this message translates to:
-  /// **'Next Recommendation'**
-  String get sessionSummaryNextRecommendationTitle;
-
-  /// No description provided for @sessionSummaryNextRecommendationDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Maintain momentum with short repetition practice.'**
-  String get sessionSummaryNextRecommendationDescription;
-
-  /// No description provided for @sessionSummaryNextRecommendationBody.
-  ///
-  /// In en, this message translates to:
-  /// **'After submitting your report, the next study session will open. Advanced content is released after admin review.'**
-  String get sessionSummaryNextRecommendationBody;
+  /// **'Please report this session\'s learning results.'**
+  String get sessionSummaryReportRecommendationBody;
 
   /// No description provided for @sessionSummarySecondaryToSelect.
   ///
@@ -626,11 +620,11 @@ abstract class AppLocalizations {
   /// **'Back to selection'**
   String get sessionSummarySecondaryToSelect;
 
-  /// No description provided for @sessionSummaryPrimaryToReportPreview.
+  /// No description provided for @sessionSummaryPrimaryToReportDraft.
   ///
   /// In en, this message translates to:
-  /// **'Go to Report Preview'**
-  String get sessionSummaryPrimaryToReportPreview;
+  /// **'Report Draft'**
+  String get sessionSummaryPrimaryToReportDraft;
 
   /// No description provided for @loginFailedWithError.
   ///
@@ -715,6 +709,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Write Report'**
   String get reportPreviewPrimaryToReport;
+
+  /// No description provided for @reportDraftTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Draft'**
+  String get reportDraftTitle;
+
+  /// No description provided for @reportDraftCopyButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Report Draft'**
+  String get reportDraftCopyButton;
+
+  /// No description provided for @reportDraftCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Report draft copied.'**
+  String get reportDraftCopied;
+
+  /// No description provided for @reportDraftDefaultSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'This session has been completed.'**
+  String get reportDraftDefaultSummary;
+
+  /// No description provided for @reportDraftLineSessionId.
+  ///
+  /// In en, this message translates to:
+  /// **'Session ID: {sessionId}'**
+  String reportDraftLineSessionId(String sessionId);
+
+  /// No description provided for @reportDraftLineContentSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Content Set: {contentSetId}'**
+  String reportDraftLineContentSet(String contentSetId);
+
+  /// No description provided for @reportDraftLineMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Learning Mode: {mode}'**
+  String reportDraftLineMode(String mode);
+
+  /// No description provided for @reportDraftLineTotalItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Items: {count}'**
+  String reportDraftLineTotalItems(int count);
+
+  /// No description provided for @reportDraftLineCompletedItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed Items: {count}'**
+  String reportDraftLineCompletedItems(int count);
+
+  /// No description provided for @reportDraftLineAccuracy.
+  ///
+  /// In en, this message translates to:
+  /// **'Accuracy: {accuracy}%'**
+  String reportDraftLineAccuracy(int accuracy);
+
+  /// No description provided for @reportDraftLineCorrectAnswers.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct Answers: {value}'**
+  String reportDraftLineCorrectAnswers(String value);
+
+  /// No description provided for @reportDraftLineAverageSimilarity.
+  ///
+  /// In en, this message translates to:
+  /// **'Average Similarity: {value}'**
+  String reportDraftLineAverageSimilarity(String value);
+
+  /// No description provided for @reportDraftLineSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Session Summary: {summary}'**
+  String reportDraftLineSummary(String summary);
+
+  /// No description provided for @reportDraftLineListeningPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening Completed: (check required)'**
+  String get reportDraftLineListeningPending;
+
+  /// No description provided for @reportDraftLineSpeakingPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Speaking Completed: (check required)'**
+  String get reportDraftLineSpeakingPending;
+
+  /// No description provided for @reportDraftLineReflectionPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Learning Reflection: (write 1-2 sentences)'**
+  String get reportDraftLineReflectionPending;
 
   /// No description provided for @reportGateTitle.
   ///
@@ -1223,7 +1313,7 @@ abstract class AppLocalizations {
   /// No description provided for @learningSelectAsrPolicyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Speech Recognition Policy'**
+  /// **'Speech Recognition Selection'**
   String get learningSelectAsrPolicyTitle;
 
   /// No description provided for @learningSelectAsrPolicyIntro.
@@ -1235,25 +1325,25 @@ abstract class AppLocalizations {
   /// No description provided for @learningSelectAsrPolicyServerOnly.
   ///
   /// In en, this message translates to:
-  /// **'Server STT Only'**
+  /// **'Server First Recognition'**
   String get learningSelectAsrPolicyServerOnly;
 
   /// No description provided for @learningSelectAsrPolicyOffline.
   ///
   /// In en, this message translates to:
-  /// **'Offline Support'**
+  /// **'On-device Only Recognition'**
   String get learningSelectAsrPolicyOffline;
 
   /// No description provided for @learningSelectAsrPolicyServerOnlyDesc.
   ///
   /// In en, this message translates to:
-  /// **'No local model download. Offline evaluation is unavailable.'**
+  /// **'Use cloud STT first, then fall back to on-device recognition if needed.'**
   String get learningSelectAsrPolicyServerOnlyDesc;
 
   /// No description provided for @learningSelectAsrPolicyOfflineDesc.
   ///
   /// In en, this message translates to:
-  /// **'With local ASR, speaking evaluation can continue offline.'**
+  /// **'Skip cloud STT and evaluate speech with the on-device recognizer only.'**
   String get learningSelectAsrPolicyOfflineDesc;
 
   /// No description provided for @learningSelectAsrSyncNow.
@@ -1449,7 +1539,7 @@ abstract class AppLocalizations {
   /// No description provided for @loginSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Use development mode login until phone auth is enabled.'**
+  /// **'Sign in with your email and password.'**
   String get loginSubtitle;
 
   /// No description provided for @approvalPendingTitle.
@@ -1505,6 +1595,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Learning is paused until mandatory report is submitted.'**
   String get learningBlockedMessage;
+
+  /// No description provided for @reportDraftLineLearnerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Learner Name: {name}'**
+  String reportDraftLineLearnerName(String name);
+
+  /// No description provided for @reportDraftLineLearnerPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Learner Phone: {phone}'**
+  String reportDraftLineLearnerPhone(String phone);
 }
 
 class _AppLocalizationsDelegate

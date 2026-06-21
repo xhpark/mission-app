@@ -103,7 +103,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get interactiveProgressDescription =>
-      'Check your current step and remaining time.';
+      'Check your current step and progress.';
 
   @override
   String interactiveRemainingSeconds(int seconds) {
@@ -269,6 +269,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sessionSummaryStatCorrectAnswers => 'Correct Answers';
 
   @override
+  String get sessionSummaryStatAverageSimilarity => 'Average Similarity';
+
+  @override
   String get sessionSummaryStatSessionId => 'Session ID';
 
   @override
@@ -291,25 +294,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sessionSummaryResultDescription => 'Summary of this session.';
 
   @override
-  String get sessionSummaryCoachNote =>
-      'Coach note: Your mission sentence pronunciation improved. Keep practicing speaking in the next session too.';
+  String get sessionSummaryReportRecommendationTitle => 'Report Recommendation';
 
   @override
-  String get sessionSummaryNextRecommendationTitle => 'Next Recommendation';
-
-  @override
-  String get sessionSummaryNextRecommendationDescription =>
-      'Maintain momentum with short repetition practice.';
-
-  @override
-  String get sessionSummaryNextRecommendationBody =>
-      'After submitting your report, the next study session will open. Advanced content is released after admin review.';
+  String get sessionSummaryReportRecommendationBody =>
+      'Please report this session\'s learning results.';
 
   @override
   String get sessionSummarySecondaryToSelect => 'Back to selection';
 
   @override
-  String get sessionSummaryPrimaryToReportPreview => 'Go to Report Preview';
+  String get sessionSummaryPrimaryToReportDraft => 'Report Draft';
 
   @override
   String loginFailedWithError(String error) {
@@ -364,6 +359,75 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportPreviewPrimaryToReport => 'Write Report';
+
+  @override
+  String get reportDraftTitle => 'Report Draft';
+
+  @override
+  String get reportDraftCopyButton => 'Copy Report Draft';
+
+  @override
+  String get reportDraftCopied => 'Report draft copied.';
+
+  @override
+  String get reportDraftDefaultSummary => 'This session has been completed.';
+
+  @override
+  String reportDraftLineSessionId(String sessionId) {
+    return 'Session ID: $sessionId';
+  }
+
+  @override
+  String reportDraftLineContentSet(String contentSetId) {
+    return 'Content Set: $contentSetId';
+  }
+
+  @override
+  String reportDraftLineMode(String mode) {
+    return 'Learning Mode: $mode';
+  }
+
+  @override
+  String reportDraftLineTotalItems(int count) {
+    return 'Total Items: $count';
+  }
+
+  @override
+  String reportDraftLineCompletedItems(int count) {
+    return 'Completed Items: $count';
+  }
+
+  @override
+  String reportDraftLineAccuracy(int accuracy) {
+    return 'Accuracy: $accuracy%';
+  }
+
+  @override
+  String reportDraftLineCorrectAnswers(String value) {
+    return 'Correct Answers: $value';
+  }
+
+  @override
+  String reportDraftLineAverageSimilarity(String value) {
+    return 'Average Similarity: $value';
+  }
+
+  @override
+  String reportDraftLineSummary(String summary) {
+    return 'Session Summary: $summary';
+  }
+
+  @override
+  String get reportDraftLineListeningPending =>
+      'Listening Completed: (check required)';
+
+  @override
+  String get reportDraftLineSpeakingPending =>
+      'Speaking Completed: (check required)';
+
+  @override
+  String get reportDraftLineReflectionPending =>
+      'Learning Reflection: (write 1-2 sentences)';
 
   @override
   String get reportGateTitle => 'Report Gate';
@@ -663,25 +727,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get learningSelectConfirmStartNew => 'Start New';
 
   @override
-  String get learningSelectAsrPolicyTitle => 'Speech Recognition Policy';
+  String get learningSelectAsrPolicyTitle => 'Speech Recognition Selection';
 
   @override
   String get learningSelectAsrPolicyIntro =>
       'Choose speech recognition mode. You can change it later.';
 
   @override
-  String get learningSelectAsrPolicyServerOnly => 'Server STT Only';
+  String get learningSelectAsrPolicyServerOnly => 'Server First Recognition';
 
   @override
-  String get learningSelectAsrPolicyOffline => 'Offline Support';
+  String get learningSelectAsrPolicyOffline => 'On-device Only Recognition';
 
   @override
   String get learningSelectAsrPolicyServerOnlyDesc =>
-      'No local model download. Offline evaluation is unavailable.';
+      'Use cloud STT first, then fall back to on-device recognition if needed.';
 
   @override
   String get learningSelectAsrPolicyOfflineDesc =>
-      'With local ASR, speaking evaluation can continue offline.';
+      'Skip cloud STT and evaluate speech with the on-device recognizer only.';
 
   @override
   String get learningSelectAsrSyncNow => 'Sync Now';
@@ -796,8 +860,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginTitle => 'Learner Login';
 
   @override
-  String get loginSubtitle =>
-      'Use development mode login until phone auth is enabled.';
+  String get loginSubtitle => 'Sign in with your email and password.';
 
   @override
   String get approvalPendingTitle => 'Approval Pending';
@@ -828,4 +891,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get learningBlockedMessage =>
       'Learning is paused until mandatory report is submitted.';
+
+  @override
+  String reportDraftLineLearnerName(String name) {
+    return 'Learner Name: $name';
+  }
+
+  @override
+  String reportDraftLineLearnerPhone(String phone) {
+    return 'Learner Phone: $phone';
+  }
 }

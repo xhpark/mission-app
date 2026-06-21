@@ -1,22 +1,29 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mission_app/l10n/app_localizations.dart';
 
+import '../../../../app/theme/app_colors.dart';
 import '../../../../core/errors/app_error_messages.dart';
 import '../../../../core/firebase/firebase_providers.dart';
 import '../../../../core/services/asr_policy_controller.dart';
 import '../../../../core/widgets/app_bottom_action_bar.dart';
-import '../../../../core/widgets/app_hero_header.dart';
 import '../../../../core/widgets/app_section_card.dart';
 import '../../../../core/widgets/app_status_banner.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../bootstrap/presentation/controllers/bootstrap_controller.dart';
 import '../../../sentence_learning/presentation/controllers/current_study_session_controller.dart';
 import '../../../session_runtime/presentation/controllers/study_flow_controller.dart';
 import '../../../session_runtime/presentation/providers/session_runtime_providers.dart';
 import '../../domain/study_mode_route_resolver.dart';
 import '../controllers/learning_selection_controller.dart';
 import '../controllers/start_study_session_controller.dart';
+
+final _startActionChoiceProvider =
+    NotifierProvider<_StartActionChoiceController, _StartActionChoice>(
+      _StartActionChoiceController.new,
+    );
 
 class LearningSelectScreen extends ConsumerWidget {
   const LearningSelectScreen({super.key});
@@ -27,178 +34,220 @@ class LearningSelectScreen extends ConsumerWidget {
     final selection = ref.watch(learningSelectionProvider);
     final selectionController = ref.read(learningSelectionProvider.notifier);
     final activeSession = ref.watch(currentStudySessionProvider);
+    final startActionChoice = ref.watch(_startActionChoiceProvider);
     final asrPolicy = ref.watch(asrPolicyProvider);
     final syncState = ref.watch(speakingFallbackSyncWorkerProvider);
     final startState = ref.watch(startStudySessionControllerProvider);
+    final bootstrapSession = ref
+        .watch(bootstrapControllerProvider)
+        .asData
+        ?.value;
+    final currentUser = ref.watch(authStateChangesProvider).asData?.value;
+    final debugAdminOverride =
+        kDebugMode &&
+        currentUser?.email?.trim().toLowerCase() == 'xhpark65@gmail.com';
+    final isAdmin = bootstrapSession?.isAdmin == true || debugAdminOverride;
     final isStarting = startState.isLoading;
     final startError = startState.whenOrNull(
       error: (error, _) => toUserFacingErrorMessage(error),
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n?.learningSelectTitle ?? 'Learning Select'),
-        actions: [
-          PopupMenuButton<_SelectMenuAction>(
-            icon: const Icon(Icons.settings_outlined),
-            onSelected: (value) => _onMenuSelected(value, context, ref),
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                value: _SelectMenuAction.guide,
-                child: Text(l10n?.menuGuide ?? 'Learning Guide'),
-              ),
-              PopupMenuItem(
-                value: _SelectMenuAction.resume,
-                child: Text(l10n?.menuResume ?? 'Resume Session'),
-              ),
-              PopupMenuItem(
-                value: _SelectMenuAction.signOut,
-                child: Text(l10n?.menuSignOut ?? 'Sign Out'),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          AppHeroHeader(
-            title: l10n?.learningSelectTitle ?? 'Learning Select',
-            subtitle:
-                l10n?.learningSelectSubtitle ??
-                'Choose category, level, and mode to start.',
-            icon: Icons.school_outlined,
-          ),
-          const SizedBox(height: 12),
-          _QuickActionRow(
-            guideLabel: l10n?.menuGuide ?? 'Learning Guide',
-            resumeLabel: l10n?.menuResume ?? 'Resume Session',
-          ),
-          const SizedBox(height: 12),
-          _SelectionSummaryCard(
-            summaryText: _selectionSummary(selection, l10n),
-          ),
-          const SizedBox(height: 16),
-          _AsrPolicyCard(
-            title: l10n?.learningSelectAsrPolicyTitle ?? 'Speech Recognition Policy',
-            intro: l10n?.learningSelectAsrPolicyIntro ??
-                'Choose speech recognition mode. You can change it later.',
-            serverOnlyLabel:
-                l10n?.learningSelectAsrPolicyServerOnly ?? 'Server STT Only',
-            offlineLabel:
-                l10n?.learningSelectAsrPolicyOffline ?? 'Offline Support',
-            serverOnlyDescription:
-                l10n?.learningSelectAsrPolicyServerOnlyDesc ??
-                    'No local model download. Offline evaluation is unavailable.',
-            offlineDescription:
-                l10n?.learningSelectAsrPolicyOfflineDesc ??
-                    'With local ASR, speaking evaluation can continue offline.',
-            syncNowLabel: l10n?.learningSelectAsrSyncNow ?? 'Sync Now',
-            pendingSyncLabelBuilder: (count) =>
-                l10n?.learningSelectAsrPendingSync(count) ??
-                '$count offline results pending sync.',
-            noPendingSyncLabel: l10n?.learningSelectAsrNoPendingSync ??
-                'No pending offline sync.',
-            policy: asrPolicy,
-            pendingSyncCount: syncState.pendingCount,
-            onServerOnlySelected: () {
-              ref.read(asrPolicyProvider.notifier).chooseServerOnly();
-            },
-            onHybridSelected: () {
-              ref.read(asrPolicyProvider.notifier).chooseHybridWithOnDevice();
-              ref.read(speakingFallbackSyncWorkerProvider.notifier).syncNow();
-            },
-            onSyncPressed: () {
-              ref.read(speakingFallbackSyncWorkerProvider.notifier).syncNow();
-            },
-          ),
-          const SizedBox(height: 24),
-          AppSectionCard(
-            title: l10n?.categoryLabel ?? 'Category',
-            child: _ChoiceChipRow<LearningCategory>(
-              values: LearningCategory.values,
-              selected: selection.category,
-              labelBuilder: (value) => _categoryLabel(value, l10n),
-              onSelected: (value) {
-                selectionController.selectCategory(value);
-                ref.read(startStudySessionControllerProvider.notifier).clearError();
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-          AppSectionCard(
-            title: l10n?.levelLabel ?? 'Level',
-            child: _ChoiceChipRow<LearningLevel>(
-              values: LearningLevel.values,
-              selected: selection.level,
-              labelBuilder: (value) => _levelLabel(value, l10n),
-              onSelected: (value) {
-                selectionController.selectLevel(value);
-                ref.read(startStudySessionControllerProvider.notifier).clearError();
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-          AppSectionCard(
-            title: l10n?.modeLabel ?? 'Mode',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _ChoiceChipRow<LearningMode>(
-                  values: LearningMode.values,
-                  selected: selection.mode,
-                  labelBuilder: (value) => _modeLabel(value, l10n),
-                  onSelected: (value) {
-                    selectionController.selectMode(value);
-                    ref.read(startStudySessionControllerProvider.notifier).clearError();
-                  },
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) {
+          return;
+        }
+        _returnToLogin(context, ref);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n?.learningSelectTitle ?? '학습 선택'),
+          actions: [
+            PopupMenuButton<_SelectMenuAction>(
+              icon: const Icon(Icons.settings_outlined),
+              onSelected: (value) => _onMenuSelected(value, context, ref),
+              itemBuilder: (_) => [
+                if (isAdmin)
+                  const PopupMenuItem(
+                    value: _SelectMenuAction.adminDashboard,
+                    child: Text('관리자 대시보드'),
+                  ),
+                PopupMenuItem(
+                  value: _SelectMenuAction.guide,
+                  child: Text(l10n?.menuGuide ?? '학습 가이드'),
                 ),
-                const SizedBox(height: 12),
-                AppStatusBanner(message: _modeDescription(selection.mode, l10n)),
+                PopupMenuItem(
+                  value: _SelectMenuAction.resume,
+                  child: Text(l10n?.menuResume ?? '이어하기'),
+                ),
+                PopupMenuItem(
+                  value: _SelectMenuAction.signOut,
+                  child: Text(l10n?.menuSignOut ?? '로그아웃'),
+                ),
               ],
             ),
-          ),
-          if (activeSession != null) ...[
-            const SizedBox(height: 16),
-            _ActiveSessionCard(
-              title: l10n?.learningSelectActiveSessionTitle ??
-                  'There is an active learning session.',
-              activeSession: activeSession,
-              l10n: l10n,
-              onResume: () => context.go(routeForLearningMode(activeSession.mode)),
-              onClear: () => _startSession(context, ref, selection, forceReplace: true),
-              resumeLabel: l10n?.resumeSession ?? 'Resume Session',
-              clearLabel: l10n?.learningSelectStartNewButton ?? 'Start New',
-            ),
           ],
-          if (startError != null) ...[
-            const SizedBox(height: 16),
-            AppStatusBanner(
-              isError: true,
-              icon: Icons.error_outline,
-              message: '${l10n?.failedToStartSession ?? 'Failed to start session.'}\n$startError',
+        ),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          children: [
+            if (isAdmin) ...[
+              AppSectionCard(
+                title: '관리자 메뉴',
+                description: '학습자 승인, 리포트 현황, 일간/주간 학습 통계를 확인할 수 있습니다.',
+                icon: Icons.admin_panel_settings_outlined,
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilledButton.icon(
+                    onPressed: () => context.go('/admin-dashboard'),
+                    icon: const Icon(Icons.dashboard_outlined),
+                    label: const Text('관리자 대시보드 열기'),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: AppSectionCard(
+                    title: l10n?.categoryLabel ?? '학습 선택',
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                    child: _ChoiceChipRow<LearningCategory>(
+                      values: LearningCategory.values,
+                      selected: selection.category,
+                      labelBuilder: (value) => _categoryLabel(value, l10n),
+                      onSelected: (value) {
+                        selectionController.selectCategory(value);
+                        ref
+                            .read(startStudySessionControllerProvider.notifier)
+                            .clearError();
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: AppSectionCard(
+                    title: l10n?.levelLabel ?? '난이도 선택',
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                    child: _ChoiceChipRow<LearningLevel>(
+                      values: LearningLevel.values,
+                      selected: selection.level,
+                      labelBuilder: (value) => _levelLabel(value, l10n),
+                      onSelected: (value) {
+                        selectionController.selectLevel(value);
+                        ref
+                            .read(startStudySessionControllerProvider.notifier)
+                            .clearError();
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: () =>
-                    ref.read(startStudySessionControllerProvider.notifier).clearError(),
-                icon: const Icon(Icons.refresh),
-                label: Text(l10n?.dismissError ?? 'Dismiss Error'),
+            AppSectionCard(
+              title: l10n?.modeLabel ?? '학습모드 선택',
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: _ChoiceChipRow<LearningMode>(
+                values: LearningMode.values,
+                selected: selection.mode,
+                labelBuilder: (value) => _modeLabel(value, l10n),
+                onSelected: (value) {
+                  selectionController.selectMode(value);
+                  ref
+                      .read(startStudySessionControllerProvider.notifier)
+                      .clearError();
+                },
               ),
             ),
+            const SizedBox(height: 8),
+            _StartActionChoiceCard(
+              title: '시작 방식 선택',
+              selected: startActionChoice,
+              resumeLabel: l10n?.resumeSession ?? '이어 학습',
+              startNewLabel: l10n?.learningSelectStartNewButton ?? '새 학습 시작',
+              onSelected: (value) =>
+                  ref.read(_startActionChoiceProvider.notifier).select(value),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 6,
+                  child: _AsrPolicyCard(
+                    title: l10n?.learningSelectAsrPolicyTitle ?? '음성 인식 선택',
+                    serverFirstLabel:
+                        l10n?.learningSelectAsrPolicyServerOnly ?? '서버 우선 인식',
+                    offlineLabel: '폰\n전용\n인식',
+                    policy: asrPolicy,
+                    onServerFirstSelected: () {
+                      ref.read(asrPolicyProvider.notifier).chooseServerFirst();
+                    },
+                    onOnDeviceOnlySelected: () {
+                      ref.read(asrPolicyProvider.notifier).chooseOnDeviceOnly();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 4,
+                  child: _SyncStatusCard(
+                    title: '동기화',
+                    syncNowLabel: l10n?.learningSelectAsrSyncNow ?? '동기화',
+                    pendingSyncLabelBuilder: (count) =>
+                        l10n?.learningSelectAsrPendingSync(count) ??
+                        '오프라인 동기화 대기 항목 $count건',
+                    noPendingSyncLabel:
+                        l10n?.learningSelectAsrNoPendingSync ?? '항목 없음',
+                    pendingSyncCount: syncState.pendingCount,
+                    onSyncPressed: () {
+                      ref
+                          .read(speakingFallbackSyncWorkerProvider.notifier)
+                          .syncNow();
+                    },
+                  ),
+                ),
+              ],
+            ),
+            if (startError != null) ...[
+              const SizedBox(height: 8),
+              AppStatusBanner(
+                isError: true,
+                icon: Icons.error_outline,
+                message:
+                    '${l10n?.failedToStartSession ?? '학습 세션 시작에 실패했습니다.'}\n$startError',
+              ),
+            ],
           ],
-        ],
-      ),
-      bottomNavigationBar: AppBottomActionBar(
-        secondaryLabel: l10n?.menuGuide ?? 'Learning Guide',
-        onSecondaryPressed: () => context.go('/guide'),
-        primaryLabel: isStarting
-            ? (l10n?.learningSelectStarting ?? 'Starting session...')
-            : (l10n?.startSession ?? 'Start Session'),
-        onPrimaryPressed:
-            selection.canProceed && !isStarting ? () => _startSession(context, ref, selection) : null,
+        ),
+        bottomNavigationBar: AppBottomActionBar(
+          secondaryLabel: null,
+          onSecondaryPressed: null,
+          primaryLabel: isStarting
+              ? (l10n?.learningSelectStarting ?? '세션 시작 중...')
+              : (l10n?.startSession ?? '학습 시작'),
+          primaryMinHeight: 66,
+          primaryTextStyle: Theme.of(context).textTheme.headlineMedium
+              ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.3),
+          primaryBackgroundColor: AppColors.primary.withValues(alpha: 0.78),
+          primaryForegroundColor: Colors.white,
+          primaryIcon: Icons.play_arrow_rounded,
+          onPrimaryPressed: !isStarting && selection.canProceed
+              ? () => _onPrimaryStart(
+                  context,
+                  ref,
+                  selection,
+                  startActionChoice,
+                  activeSession,
+                )
+              : null,
+        ),
       ),
     );
   }
@@ -209,16 +258,52 @@ class LearningSelectScreen extends ConsumerWidget {
     WidgetRef ref,
   ) {
     switch (value) {
+      case _SelectMenuAction.adminDashboard:
+        context.go('/admin-dashboard');
       case _SelectMenuAction.guide:
         context.go('/guide');
-        return;
       case _SelectMenuAction.resume:
         context.go('/resume');
-        return;
       case _SelectMenuAction.signOut:
-        ref.read(authControllerProvider.notifier).signOut();
-        return;
+        _returnToLogin(context, ref);
     }
+  }
+
+  Future<void> _returnToLogin(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref.read(authControllerProvider.notifier).signOut();
+      if (context.mounted) {
+        context.go('/login');
+      }
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(toUserFacingErrorMessage(error))));
+    }
+  }
+
+  Future<void> _onPrimaryStart(
+    BuildContext context,
+    WidgetRef ref,
+    LearningSelectionState selection,
+    _StartActionChoice startActionChoice,
+    CurrentStudySession? activeSession,
+  ) async {
+    if (startActionChoice == _StartActionChoice.resume &&
+        activeSession != null) {
+      context.go(routeForLearningMode(activeSession.mode));
+      return;
+    }
+
+    await _startSession(
+      context,
+      ref,
+      selection,
+      forceReplace: startActionChoice == _StartActionChoice.startNew,
+    );
   }
 
   Future<void> _startSession(
@@ -233,26 +318,27 @@ class LearningSelectScreen extends ConsumerWidget {
       if (activeSession != null) {
         var shouldReplace = forceReplace;
         if (!forceReplace) {
-          shouldReplace = await showDialog<bool>(
+          shouldReplace =
+              await showDialog<bool>(
                 context: context,
                 builder: (dialogContext) => AlertDialog(
                   title: Text(
                     l10n?.learningSelectConfirmStartNewTitle ??
-                        'Start a new learning session?',
+                        '새 학습 세션을 시작할까요?',
                   ),
                   content: Text(
                     l10n?.learningSelectConfirmStartNewMessage ??
-                        'Current session will be abandoned. If you want to continue it, cancel and tap resume.',
+                        '현재 세션은 포기 처리됩니다. 이어서 학습하려면 취소 후 이어하기를 누르세요.',
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(dialogContext).pop(false),
-                      child: Text(l10n?.learningSelectConfirmCancel ?? 'Cancel'),
+                      child: Text(l10n?.learningSelectConfirmCancel ?? '취소'),
                     ),
                     ElevatedButton(
                       onPressed: () => Navigator.of(dialogContext).pop(true),
                       child: Text(
-                        l10n?.learningSelectConfirmStartNew ?? 'Start New',
+                        l10n?.learningSelectConfirmStartNew ?? '새로 시작',
                       ),
                     ),
                   ],
@@ -267,7 +353,9 @@ class LearningSelectScreen extends ConsumerWidget {
         final user = ref.read(authStateChangesProvider).asData?.value;
         final developmentSession = ref.read(developmentSessionProvider);
         if (user != null && !user.isAnonymous && !developmentSession) {
-          await ref.read(sessionRuntimeRepositoryProvider).abandonStudySession(
+          await ref
+              .read(sessionRuntimeRepositoryProvider)
+              .abandonStudySession(
                 userId: user.uid,
                 sessionId: activeSession.sessionId,
               );
@@ -294,291 +382,192 @@ class LearningSelectScreen extends ConsumerWidget {
   }
 }
 
-enum _SelectMenuAction { guide, resume, signOut }
+enum _SelectMenuAction { adminDashboard, guide, resume, signOut }
 
-class _QuickActionRow extends StatelessWidget {
-  const _QuickActionRow({required this.guideLabel, required this.resumeLabel});
+enum _StartActionChoice { resume, startNew }
 
-  final String guideLabel;
-  final String resumeLabel;
-
+class _StartActionChoiceController extends Notifier<_StartActionChoice> {
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () => context.go('/guide'),
-            icon: const Icon(Icons.menu_book_outlined),
-            label: Text(guideLabel),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () => context.go('/resume'),
-            icon: const Icon(Icons.history_outlined),
-            label: Text(resumeLabel),
-          ),
-        ),
-      ],
-    );
-  }
-}
+  _StartActionChoice build() => _StartActionChoice.resume;
 
-class _SelectionSummaryCard extends StatelessWidget {
-  const _SelectionSummaryCard({required this.summaryText});
-
-  final String summaryText;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              Icons.route_outlined,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                summaryText,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ActiveSessionCard extends StatelessWidget {
-  const _ActiveSessionCard({
-    required this.title,
-    required this.activeSession,
-    required this.l10n,
-    required this.onResume,
-    required this.onClear,
-    required this.resumeLabel,
-    required this.clearLabel,
-  });
-
-  final String title;
-  final CurrentStudySession activeSession;
-  final AppLocalizations? l10n;
-  final VoidCallback onResume;
-  final VoidCallback onClear;
-  final String resumeLabel;
-  final String clearLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(
-              '${_categoryLabel(activeSession.category, l10n)} - ${_levelLabel(activeSession.level, l10n)} - ${_modeLabel(activeSession.mode, l10n)}',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onResume,
-                    child: Text(resumeLabel),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextButton(
-                    onPressed: onClear,
-                    child: Text(clearLabel),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  void select(_StartActionChoice value) => state = value;
 }
 
 class _AsrPolicyCard extends StatelessWidget {
   const _AsrPolicyCard({
     required this.title,
-    required this.intro,
-    required this.serverOnlyLabel,
+    required this.serverFirstLabel,
     required this.offlineLabel,
-    required this.serverOnlyDescription,
-    required this.offlineDescription,
-    required this.syncNowLabel,
-    required this.pendingSyncLabelBuilder,
-    required this.noPendingSyncLabel,
     required this.policy,
-    required this.pendingSyncCount,
-    required this.onServerOnlySelected,
-    required this.onHybridSelected,
-    required this.onSyncPressed,
+    required this.onServerFirstSelected,
+    required this.onOnDeviceOnlySelected,
   });
 
   final String title;
-  final String intro;
-  final String serverOnlyLabel;
+  final String serverFirstLabel;
   final String offlineLabel;
-  final String serverOnlyDescription;
-  final String offlineDescription;
-  final String syncNowLabel;
-  final String Function(int count) pendingSyncLabelBuilder;
-  final String noPendingSyncLabel;
-
   final AsrPolicyState policy;
-  final int pendingSyncCount;
-  final VoidCallback onServerOnlySelected;
-  final VoidCallback onHybridSelected;
-  final VoidCallback onSyncPressed;
+  final VoidCallback onServerFirstSelected;
+  final VoidCallback onOnDeviceOnlySelected;
 
   @override
   Widget build(BuildContext context) {
+    final segmentTextStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+      fontWeight: FontWeight.w800,
+      height: 1.12,
+      letterSpacing: -0.4,
+    );
+
     return AppSectionCard(
       title: title,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!policy.decided) ...[
-            AppStatusBanner(
-              icon: Icons.info_outline,
-              message: intro,
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      child: SegmentedButton<AsrPolicyMode>(
+        segments: [
+          ButtonSegment<AsrPolicyMode>(
+            value: AsrPolicyMode.serverFirst,
+            label: Text(
+              serverFirstLabel.replaceAll(' ', '\n'),
+              textAlign: TextAlign.center,
+              style: segmentTextStyle,
             ),
-            const SizedBox(height: 10),
-          ],
-          SegmentedButton<AsrPolicyMode>(
-            segments: [
-              ButtonSegment<AsrPolicyMode>(
-                value: AsrPolicyMode.serverOnly,
-                label: Text(serverOnlyLabel),
-                icon: const Icon(Icons.cloud_outlined),
-              ),
-              ButtonSegment<AsrPolicyMode>(
-                value: AsrPolicyMode.hybridWithOnDevice,
-                label: Text(offlineLabel),
-                icon: const Icon(Icons.offline_bolt_outlined),
-              ),
-            ],
-            selected: {policy.mode},
-            onSelectionChanged: (selection) {
-              final selected = selection.first;
-              if (selected == AsrPolicyMode.hybridWithOnDevice) {
-                onHybridSelected();
-                return;
-              }
-              onServerOnlySelected();
-            },
           ),
-          const SizedBox(height: 8),
-          Text(
-            policy.mode == AsrPolicyMode.serverOnly
-                ? serverOnlyDescription
-                : offlineDescription,
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  pendingSyncCount > 0
-                      ? pendingSyncLabelBuilder(pendingSyncCount)
-                      : noPendingSyncLabel,
-                ),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton.icon(
-                onPressed: onSyncPressed,
-                icon: const Icon(Icons.sync),
-                label: Text(syncNowLabel),
-              ),
-            ],
+          ButtonSegment<AsrPolicyMode>(
+            value: AsrPolicyMode.onDeviceOnly,
+            label: Text(
+              offlineLabel,
+              textAlign: TextAlign.center,
+              style: segmentTextStyle,
+            ),
           ),
         ],
+        selected: {policy.mode},
+        onSelectionChanged: (selection) {
+          final selected = selection.first;
+          if (selected == AsrPolicyMode.onDeviceOnly) {
+            onOnDeviceOnlySelected();
+          } else {
+            onServerFirstSelected();
+          }
+        },
       ),
     );
   }
 }
 
-String _categoryLabel(LearningCategory category, AppLocalizations? l10n) =>
-    switch (category) {
-      LearningCategory.daily =>
-        l10n?.learningSelectCategoryDaily ?? 'Daily Conversation',
-      LearningCategory.mission =>
-        l10n?.learningSelectCategoryMission ?? 'Mission',
-    };
+class _SyncStatusCard extends StatelessWidget {
+  const _SyncStatusCard({
+    required this.title,
+    required this.syncNowLabel,
+    required this.pendingSyncLabelBuilder,
+    required this.noPendingSyncLabel,
+    required this.pendingSyncCount,
+    required this.onSyncPressed,
+  });
 
-String _levelLabel(LearningLevel level, AppLocalizations? l10n) =>
-    switch (level) {
-      LearningLevel.beginner => l10n?.learningSelectLevelBeginner ?? 'Beginner',
-      LearningLevel.intermediate =>
-        l10n?.learningSelectLevelIntermediate ?? 'Intermediate',
-      LearningLevel.advanced => l10n?.learningSelectLevelAdvanced ?? 'Advanced',
-    };
+  final String title;
+  final String syncNowLabel;
+  final String Function(int count) pendingSyncLabelBuilder;
+  final String noPendingSyncLabel;
+  final int pendingSyncCount;
+  final VoidCallback onSyncPressed;
 
-String _modeLabel(LearningMode mode, AppLocalizations? l10n) => switch (mode) {
-      LearningMode.sentenceLearning =>
-        l10n?.learningSelectModeSentenceLearning ?? 'Sentence Learning',
-      LearningMode.sentenceTest =>
-        l10n?.learningSelectModeSentenceTest ?? 'Sentence Test',
-      LearningMode.flashWordLearning =>
-        l10n?.learningSelectModeFlashWordLearning ?? 'Flash Word Learning',
-      LearningMode.flashWordTest =>
-        l10n?.learningSelectModeFlashWordTest ?? 'Flash Word Test',
-      LearningMode.flashSentenceLearning =>
-        l10n?.learningSelectModeFlashSentenceLearning ?? 'Flash Sentence Learning',
-      LearningMode.flashSentenceTest =>
-        l10n?.learningSelectModeFlashSentenceTest ?? 'Flash Sentence Test',
-    };
+  @override
+  Widget build(BuildContext context) {
+    final pendingLabel = pendingSyncCount > 0
+        ? pendingSyncLabelBuilder(pendingSyncCount)
+        : noPendingSyncLabel;
+    final canSync = pendingSyncCount > 0;
 
-String _selectionSummary(LearningSelectionState selection, AppLocalizations? l10n) {
-  final unselected = l10n?.learningSelectUnselected ?? 'Not selected';
-  final category =
-      selection.category != null ? _categoryLabel(selection.category!, l10n) : unselected;
-  final level = selection.level != null ? _levelLabel(selection.level!, l10n) : unselected;
-  final mode = selection.mode != null ? _modeLabel(selection.mode!, l10n) : unselected;
-  return l10n?.learningSelectSelectionSummary(category, level, mode) ??
-      'Current selection: category $category / level $level / mode $mode';
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final titleWidget = Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium,
+            );
+            final syncButton = TextButton.icon(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, 32),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
+              onPressed: canSync ? onSyncPressed : null,
+              icon: const Icon(Icons.sync, size: 15),
+              label: Text(
+                syncNowLabel,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            );
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(child: titleWidget),
+                    Flexible(child: syncButton),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  pendingLabel,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
 }
 
-String _modeDescription(LearningMode? mode, AppLocalizations? l10n) =>
-    switch (mode) {
-      LearningMode.sentenceLearning =>
-        l10n?.learningSelectModeDescSentenceLearning ??
-            'Study sentence with pronunciation and hints step by step.',
-      LearningMode.sentenceTest =>
-        l10n?.learningSelectModeDescSentenceTest ??
-            'Validate sentence understanding via choice and speaking.',
-      LearningMode.flashWordLearning =>
-        l10n?.learningSelectModeDescFlashWordLearning ??
-            'Memorize core words quickly with flash repetition.',
-      LearningMode.flashWordTest =>
-        l10n?.learningSelectModeDescFlashWordTest ??
-            'Check word memory quickly with short tests.',
-      LearningMode.flashSentenceLearning =>
-        l10n?.learningSelectModeDescFlashSentenceLearning ??
-            'Practice sentences with high-tempo flash cards.',
-      LearningMode.flashSentenceTest =>
-        l10n?.learningSelectModeDescFlashSentenceTest ??
-            'Validate sentence comprehension and speaking in quick cycles.',
-      null => l10n?.learningSelectModeDescNone ?? 'Select a mode to see guidance.',
-    };
+class _StartActionChoiceCard extends StatelessWidget {
+  const _StartActionChoiceCard({
+    required this.title,
+    required this.selected,
+    required this.resumeLabel,
+    required this.startNewLabel,
+    required this.onSelected,
+  });
+
+  final String title;
+  final _StartActionChoice selected;
+  final String resumeLabel;
+  final String startNewLabel;
+  final ValueChanged<_StartActionChoice> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSectionCard(
+      title: title,
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      child: SegmentedButton<_StartActionChoice>(
+        segments: [
+          ButtonSegment<_StartActionChoice>(
+            value: _StartActionChoice.resume,
+            icon: const Icon(Icons.history_outlined, size: 20),
+            label: Text(resumeLabel),
+          ),
+          ButtonSegment<_StartActionChoice>(
+            value: _StartActionChoice.startNew,
+            icon: const Icon(Icons.play_arrow_rounded, size: 20),
+            label: Text(startNewLabel),
+          ),
+        ],
+        selected: {selected},
+        onSelectionChanged: (selection) => onSelected(selection.first),
+      ),
+    );
+  }
+}
 
 class _ChoiceChipRow<T> extends StatelessWidget {
   const _ChoiceChipRow({
@@ -595,16 +584,60 @@ class _ChoiceChipRow<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final labelStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+      fontWeight: FontWeight.w800,
+      letterSpacing: -0.2,
+    );
+
     return Wrap(
-      spacing: 10,
-      runSpacing: 10,
+      spacing: 8,
+      runSpacing: 8,
       children: values.map((value) {
+        final isSelected = value == selected;
         return ChoiceChip(
           label: Text(labelBuilder(value)),
-          selected: value == selected,
+          selected: isSelected,
           onSelected: (_) => onSelected(value),
+          backgroundColor: AppColors.surface,
+          selectedColor: AppColors.primary,
+          checkmarkColor: Colors.white,
+          side: BorderSide(
+            color: isSelected ? AppColors.primary : AppColors.border,
+            width: 1.4,
+          ),
+          labelStyle: labelStyle?.copyWith(
+            color: isSelected ? Colors.white : AppColors.textStrong,
+          ),
         );
       }).toList(),
     );
   }
 }
+
+String _categoryLabel(LearningCategory category, AppLocalizations? l10n) =>
+    switch (category) {
+      LearningCategory.daily => l10n?.learningSelectCategoryDaily ?? '일상 회화',
+      LearningCategory.mission => l10n?.learningSelectCategoryMission ?? '선교',
+    };
+
+String _levelLabel(LearningLevel level, AppLocalizations? l10n) =>
+    switch (level) {
+      LearningLevel.beginner => l10n?.learningSelectLevelBeginner ?? '초급',
+      LearningLevel.intermediate =>
+        l10n?.learningSelectLevelIntermediate ?? '중급',
+      LearningLevel.advanced => l10n?.learningSelectLevelAdvanced ?? '고급',
+    };
+
+String _modeLabel(LearningMode mode, AppLocalizations? l10n) => switch (mode) {
+  LearningMode.sentenceLearning =>
+    l10n?.learningSelectModeSentenceLearning ?? '문장 학습',
+  LearningMode.sentenceTest => l10n?.learningSelectModeSentenceTest ?? '문장 테스트',
+  LearningMode.flashWordLearning =>
+    l10n?.learningSelectModeFlashWordLearning ?? '플래시 단어 학습',
+  LearningMode.flashWordTest =>
+    l10n?.learningSelectModeFlashWordTest ?? '플래시 단어 테스트',
+  LearningMode.flashSentenceLearning =>
+    l10n?.learningSelectModeFlashSentenceLearning ?? '플래시 문장 학습',
+  LearningMode.flashSentenceTest =>
+    l10n?.learningSelectModeFlashSentenceTest ?? '플래시 문장 테스트',
+};

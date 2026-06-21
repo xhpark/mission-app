@@ -23,28 +23,24 @@ class AppRouteGuardInput {
 }
 
 class AppRouteGuard {
-  static const reportRoutes = <String>{
-    '/report-gate',
-    '/report-preview',
-    '/report',
-    '/session-summary',
-  };
-
   static const protectedStudyRoutes = <String>{
     '/guide',
     '/sentence-learning',
     '/sentence-test/choice',
     '/sentence-test/speaking',
     '/flash-word-learning',
+    '/flash-word-test-select',
     '/flash-word-test',
+    '/flash-word-test/speaking',
     '/flash-sentence-learning',
+    '/flash-sentence-test-select',
     '/flash-sentence-test/choice',
     '/flash-sentence-test/speaking',
     '/session-summary',
     '/report',
     '/report-preview',
     '/resume',
-    '/report-gate',
+    '/admin-dashboard',
   };
 
   static const routesRequiringActiveSession = <String>{
@@ -52,26 +48,42 @@ class AppRouteGuard {
     '/sentence-test/choice',
     '/sentence-test/speaking',
     '/flash-word-learning',
+    '/flash-word-test-select',
     '/flash-word-test',
+    '/flash-word-test/speaking',
     '/flash-sentence-learning',
+    '/flash-sentence-test-select',
     '/flash-sentence-test/choice',
     '/flash-sentence-test/speaking',
     '/session-summary',
     '/report',
     '/report-preview',
-    '/report-gate',
+  };
+
+  static const routesBlockedByReportGate = <String>{
+    '/sentence-learning',
+    '/sentence-test/choice',
+    '/sentence-test/speaking',
+    '/flash-word-learning',
+    '/flash-word-test-select',
+    '/flash-word-test',
+    '/flash-word-test/speaking',
+    '/flash-sentence-learning',
+    '/flash-sentence-test-select',
+    '/flash-sentence-test/choice',
+    '/flash-sentence-test/speaking',
   };
 
   static String? redirect(AppRouteGuardInput input) {
     final session = input.bootstrapSession;
     final location = input.location;
 
-    if (input.isBootstrapping) {
-      return location == '/bootstrap' ? null : '/bootstrap';
-    }
-
     if (!input.signedIn) {
       return location == '/login' ? null : '/login';
+    }
+
+    if (input.isBootstrapping && input.bootstrapSession == null) {
+      return location == '/bootstrap' ? null : '/bootstrap';
     }
 
     if (!input.isDevelopmentAnonymous &&
@@ -80,23 +92,17 @@ class AppRouteGuard {
       return null;
     }
 
-    if (routesRequiringActiveSession.contains(location) &&
-        !input.hasCurrentSession) {
-      return '/select';
-    }
-
     if (input.isDevelopmentAnonymous) {
-      if (input.reportRequired &&
-          input.hasCurrentSession &&
-          !reportRoutes.contains(location)) {
-        return '/report-gate';
-      }
-
       if (location == '/bootstrap' || location == '/login') {
         return '/select';
       }
 
       return null;
+    }
+
+    if (routesRequiringActiveSession.contains(location) &&
+        !input.hasCurrentSession) {
+      return '/select';
     }
 
     if (session == null) {
@@ -117,8 +123,8 @@ class AppRouteGuard {
 
     if (input.reportRequired &&
         input.hasCurrentSession &&
-        !reportRoutes.contains(location)) {
-      return '/report-gate';
+        routesBlockedByReportGate.contains(location)) {
+      return '/report-preview';
     }
 
     if (location == '/bootstrap' ||

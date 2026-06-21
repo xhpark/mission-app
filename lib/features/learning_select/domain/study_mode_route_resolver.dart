@@ -6,7 +6,7 @@ String routeForLearningMode(LearningMode mode) => switch (mode) {
   LearningMode.flashWordLearning => '/flash-word-learning',
   LearningMode.flashWordTest => '/flash-word-test',
   LearningMode.flashSentenceLearning => '/flash-sentence-learning',
-  LearningMode.flashSentenceTest => '/flash-sentence-test/choice',
+  LearningMode.flashSentenceTest => '/flash-sentence-test-select',
 };
 
 String routeForSelectionOrFallback(LearningSelectionState selection) {

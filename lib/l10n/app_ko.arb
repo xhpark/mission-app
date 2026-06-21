@@ -1,4 +1,4 @@
-{
+﻿{
   "@@locale": "ko",
   "appTitle": "미션 언어 학습",
   "learningSelectTitle": "학습 선택",
@@ -11,9 +11,9 @@
   "menuGuide": "학습 가이드",
   "menuResume": "이어하기",
   "menuSignOut": "로그아웃",
-  "categoryLabel": "카테고리",
-  "levelLabel": "난이도",
-  "modeLabel": "학습 모드",
+  "categoryLabel": "학습 선택",
+  "levelLabel": "난이도 선택",
+  "modeLabel": "학습모드 선택",
   "guideTitle": "학습 가이드",
   "guideHeroTitle": "시작 전에 확인하세요",
   "guideHeroSubtitle": "아래 순서대로 진행하면 학습 흐름을 안정적으로 유지할 수 있습니다.",
@@ -30,7 +30,7 @@
   "interactiveActionError": "처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
   "interactiveBackTooltip": "뒤로가기",
   "interactiveProgressTitle": "진행 상태",
-  "interactiveProgressDescription": "현재 단계와 남은 시간을 확인하세요.",
+  "interactiveProgressDescription": "현재 단계와 진행 상태를 확인하세요.",
   "interactiveRemainingSeconds": "남은 시간 {seconds}초",
   "@interactiveRemainingSeconds": {
     "placeholders": {
@@ -105,6 +105,7 @@
   "sessionSummaryStatCompletedItems": "완료 항목",
   "sessionSummaryStatAccuracy": "정확도",
   "sessionSummaryStatCorrectAnswers": "정답 수",
+  "sessionSummaryStatAverageSimilarity": "유사도 평균",
   "sessionSummaryStatSessionId": "세션 ID",
   "sessionSummarySubtitleNoSession": "학습 세션이 완료되었습니다. 결과를 확인한 뒤 리포트를 제출하세요.",
   "sessionSummarySubtitleWithMode": "{mode} 세션이 완료되었습니다. 리포트를 제출하면 다음 세션이 열립니다.",
@@ -118,12 +119,10 @@
   "sessionSummaryHeroTitle": "오늘 학습을 잘 마쳤어요.",
   "sessionSummaryResultTitle": "학습 결과",
   "sessionSummaryResultDescription": "오늘 세션에서 진행한 요약입니다.",
-  "sessionSummaryCoachNote": "코치 노트: 미션 문장의 발음이 개선되었습니다. 다음 세션에서도 말하기 연습을 이어가세요.",
-  "sessionSummaryNextRecommendationTitle": "다음 추천",
-  "sessionSummaryNextRecommendationDescription": "짧은 반복 학습으로 성취감을 유지해 보세요.",
-  "sessionSummaryNextRecommendationBody": "리포트를 제출하면 다음 학습 세션이 열리고, 관리자 확인 이후 고급 콘텐츠가 순차적으로 제공됩니다.",
+  "sessionSummaryReportRecommendationTitle": "리포트 추천",
+  "sessionSummaryReportRecommendationBody": "이번 세션 학습결과를 리포트해 주세요.",
   "sessionSummarySecondaryToSelect": "선택 화면으로",
-  "sessionSummaryPrimaryToReportPreview": "리포트 프리뷰로",
+  "sessionSummaryPrimaryToReportDraft": "리포트 초안",
   "flashSentenceLearningPrimaryButton": "플래시 문장 테스트로 이동",
   "flashSentenceLearningProgressLabel": "문장 {current} / {total}",
   "@flashSentenceLearningProgressLabel": {
@@ -211,7 +210,7 @@
   "guideStep4": "원하는 시점에 누적 리포트를 제출합니다.",
   "guideStepsTitle": "학습 흐름",
   "learningSelectActiveSessionTitle": "진행 중인 학습 세션이 있습니다.",
-  "learningSelectAsrNoPendingSync": "오프라인 동기화 대기 항목이 없습니다.",
+  "learningSelectAsrNoPendingSync": "항목 없음",
   "learningSelectAsrPendingSync": "오프라인 결과 {count}건이 동기화 대기 중입니다.",
   "@learningSelectAsrPendingSync": {
     "placeholders": {
@@ -221,12 +220,12 @@
     }
   },
   "learningSelectAsrPolicyIntro": "음성 인식 정책을 선택하세요. 이후에도 변경할 수 있습니다.",
-  "learningSelectAsrPolicyOffline": "오프라인 지원",
-  "learningSelectAsrPolicyOfflineDesc": "로컬 ASR 사용 시 오프라인에서도 말하기 평가를 계속할 수 있습니다.",
-  "learningSelectAsrPolicyServerOnly": "서버 STT 전용",
-  "learningSelectAsrPolicyServerOnlyDesc": "로컬 모델 다운로드 없이 사용합니다. 오프라인 평가는 불가합니다.",
-  "learningSelectAsrPolicyTitle": "음성 인식 정책",
-  "learningSelectAsrSyncNow": "지금 동기화",
+  "learningSelectAsrPolicyOffline": "폰 전용 인식",
+  "learningSelectAsrPolicyOfflineDesc": "서버 STT를 건너뛰고 기기 내 음성 인식으로만 말하기를 평가합니다.",
+  "learningSelectAsrPolicyServerOnly": "서버 우선 인식",
+  "learningSelectAsrPolicyServerOnlyDesc": "서버 STT를 먼저 사용하고 필요하면 기기 내 음성 인식으로 보완합니다.",
+  "learningSelectAsrPolicyTitle": "음성 인식 선택",
+  "learningSelectAsrSyncNow": "동기화",
   "learningSelectCategoryDaily": "일상 회화",
   "learningSelectCategoryMission": "선교",
   "learningSelectConfirmCancel": "취소",
@@ -336,6 +335,85 @@
     }
   },
   "reportPreviewTitle": "리포트 프리뷰",
+  "reportDraftTitle": "리포트 초안",
+  "reportDraftCopyButton": "리포트 초안 복사",
+  "reportDraftCopied": "리포트 초안을 복사했습니다.",
+  "reportDraftDefaultSummary": "이번 세션 학습을 완료했습니다.",
+  "reportDraftLineSessionId": "세션 ID: {sessionId}",
+  "@reportDraftLineSessionId": {
+    "placeholders": {
+      "sessionId": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDraftLineContentSet": "콘텐츠 세트: {contentSetId}",
+  "@reportDraftLineContentSet": {
+    "placeholders": {
+      "contentSetId": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDraftLineMode": "학습 모드: {mode}",
+  "@reportDraftLineMode": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDraftLineTotalItems": "총 학습 항목: {count}",
+  "@reportDraftLineTotalItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reportDraftLineCompletedItems": "완료 항목: {count}",
+  "@reportDraftLineCompletedItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reportDraftLineAccuracy": "정확도: {accuracy}%",
+  "@reportDraftLineAccuracy": {
+    "placeholders": {
+      "accuracy": {
+        "type": "int"
+      }
+    }
+  },
+  "reportDraftLineCorrectAnswers": "정답 수: {value}",
+  "@reportDraftLineCorrectAnswers": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDraftLineAverageSimilarity": "유사도 평균: {value}",
+  "@reportDraftLineAverageSimilarity": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDraftLineSummary": "세션 요약: {summary}",
+  "@reportDraftLineSummary": {
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDraftLineListeningPending": "듣기 완료 여부: (체크 필요)",
+  "reportDraftLineSpeakingPending": "말하기 완료 여부: (체크 필요)",
+  "reportDraftLineReflectionPending": "학습 소감: (1~2문장 작성)",
   "reportPrimaryDone": "제출 완료",
   "reportPrimarySubmit": "리포트 제출",
   "reportReflectionHint": "학습 소감을 1~2문장으로 작성해 주세요.",
@@ -406,16 +484,32 @@
   },
   "speakingServerOnlyRequiresNetwork": "서버 STT 전용 모드입니다. 네트워크 연결 후 다시 시도해 주세요.",
   "studyModeBackToSelection": "학습 선택으로 돌아가기",
-  "adminContactLabel": "??? ???",
-  "loginTitle": "??? ???",
-  "loginSubtitle": "???? ?? ?? ??? ?? ?? ????? ?????.",
-  "approvalPendingTitle": "?? ??",
-  "approvalPendingMessage": "???? ???????. ?? ?? ? ??? ??? ?????.",
-  "refreshStatus": "?? ????",
-  "backToLogin": "????? ????",
-  "blockedTitle": "?? ??",
-  "blockedMessage": "?? ??? ?? ?????. ????? ??? ???.",
-  "bootstrapMessage": "?? ??? ???? ????...",
-  "learningBlockedTitle": "?? ?? ??",
-  "learningBlockedMessage": "?? ???? ??? ??? ??? ?? ?????."
+  "adminContactLabel": "관리자 연락처",
+  "loginTitle": "학습자 로그인",
+  "loginSubtitle": "이메일과 비밀번호로 로그인해 주세요.",
+  "approvalPendingTitle": "승인 대기",
+  "approvalPendingMessage": "관리자 승인 대기 중입니다. 승인 후 학습을 시작할 수 있습니다.",
+  "refreshStatus": "상태 새로고침",
+  "backToLogin": "로그인으로 돌아가기",
+  "blockedTitle": "이용 제한",
+  "blockedMessage": "이 계정은 사용할 수 없습니다. 관리자에게 문의해 주세요.",
+  "bootstrapMessage": "학습 상태를 확인하는 중입니다...",
+  "learningBlockedTitle": "학습 시작 제한",
+  "learningBlockedMessage": "관리자 승인 후 학습을 시작할 수 있습니다.",
+  "reportDraftLineLearnerName": "학습자 이름: {name}",
+  "@reportDraftLineLearnerName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDraftLineLearnerPhone": "학습자 전화번호: {phone}",
+  "@reportDraftLineLearnerPhone": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  }
 }

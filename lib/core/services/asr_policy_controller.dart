@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum AsrPolicyMode { serverOnly, hybridWithOnDevice }
+enum AsrPolicyMode { serverFirst, onDeviceOnly }
 
 class AsrPolicyState {
   const AsrPolicyState({
@@ -16,7 +16,9 @@ class AsrPolicyState {
   final bool decided;
   final AsrPolicyMode mode;
 
-  bool get allowOnDeviceFallback => mode == AsrPolicyMode.hybridWithOnDevice;
+  bool get useServerFirst => mode == AsrPolicyMode.serverFirst;
+  bool get useOnDeviceOnly => mode == AsrPolicyMode.onDeviceOnly;
+  bool get allowOnDeviceFallback => useServerFirst;
 
   AsrPolicyState copyWith({
     bool? hydrated,
@@ -48,37 +50,39 @@ class AsrPolicyController extends Notifier<AsrPolicyState> {
     }
     return const AsrPolicyState(
       hydrated: false,
-      decided: false,
-      mode: AsrPolicyMode.serverOnly,
+      decided: true,
+      mode: AsrPolicyMode.serverFirst,
     );
   }
 
-  Future<void> chooseServerOnly() async {
+  Future<void> chooseServerFirst() async {
     state = state.copyWith(
       hydrated: true,
       decided: true,
-      mode: AsrPolicyMode.serverOnly,
+      mode: AsrPolicyMode.serverFirst,
     );
     await _persist(state);
   }
 
-  Future<void> chooseHybridWithOnDevice() async {
+  Future<void> chooseOnDeviceOnly() async {
     state = state.copyWith(
       hydrated: true,
       decided: true,
-      mode: AsrPolicyMode.hybridWithOnDevice,
+      mode: AsrPolicyMode.onDeviceOnly,
     );
     await _persist(state);
   }
 
   Future<void> _hydrate() async {
     final prefs = await SharedPreferences.getInstance();
-    final decided = prefs.getBool(_decidedKey) ?? false;
-    final modeRaw = prefs.getString(_modeKey) ?? AsrPolicyMode.serverOnly.name;
-    final mode = modeRaw == AsrPolicyMode.hybridWithOnDevice.name
-        ? AsrPolicyMode.hybridWithOnDevice
-        : AsrPolicyMode.serverOnly;
-    state = AsrPolicyState(hydrated: true, decided: decided, mode: mode);
+    final modeRaw = prefs.getString(_modeKey) ?? AsrPolicyMode.serverFirst.name;
+    final mode = switch (modeRaw) {
+      'hybridWithOnDevice' => AsrPolicyMode.onDeviceOnly,
+      'onDeviceOnly' => AsrPolicyMode.onDeviceOnly,
+      _ => AsrPolicyMode.serverFirst,
+    };
+    state = AsrPolicyState(hydrated: true, decided: true, mode: mode);
+    await _persist(state);
   }
 
   Future<void> _persist(AsrPolicyState current) async {

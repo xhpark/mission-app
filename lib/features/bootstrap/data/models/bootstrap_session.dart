@@ -7,6 +7,7 @@ class BootstrapSession {
     required this.hasResume,
     required this.activeContentSetId,
     required this.adminContact,
+    required this.isAdmin,
   });
 
   final String status;
@@ -16,6 +17,7 @@ class BootstrapSession {
   final bool hasResume;
   final String activeContentSetId;
   final String adminContact;
+  final bool isAdmin;
 
   bool get isPendingApproval => status == 'pending_approval';
 
@@ -30,6 +32,7 @@ class BootstrapSession {
       hasResume: json['hasResume'] as bool? ?? false,
       activeContentSetId: json['activeContentSetId'] as String? ?? '',
       adminContact: json['adminContact'] as String? ?? '010-0000-0000',
+      isAdmin: json['isAdmin'] as bool? ?? false,
     );
   }
 
@@ -42,6 +45,7 @@ class BootstrapSession {
       hasResume: false,
       activeContentSetId: 'daily-beginner-default',
       adminContact: '010-0000-0000',
+      isAdmin: false,
     );
   }
 }

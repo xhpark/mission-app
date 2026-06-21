@@ -30,7 +30,7 @@
   "interactiveActionError": "An error occurred while processing. Please try again.",
   "interactiveBackTooltip": "Back",
   "interactiveProgressTitle": "Progress",
-  "interactiveProgressDescription": "Check your current step and remaining time.",
+  "interactiveProgressDescription": "Check your current step and progress.",
   "interactiveRemainingSeconds": "{seconds}s left",
   "@interactiveRemainingSeconds": {
     "placeholders": {
@@ -105,6 +105,7 @@
   "sessionSummaryStatCompletedItems": "Completed Items",
   "sessionSummaryStatAccuracy": "Accuracy",
   "sessionSummaryStatCorrectAnswers": "Correct Answers",
+  "sessionSummaryStatAverageSimilarity": "Average Similarity",
   "sessionSummaryStatSessionId": "Session ID",
   "sessionSummarySubtitleNoSession": "The session is complete. Review your results and submit your report.",
   "sessionSummarySubtitleWithMode": "The {mode} session is complete. Submit your report to unlock the next session.",
@@ -118,12 +119,10 @@
   "sessionSummaryHeroTitle": "Great work finishing today's learning.",
   "sessionSummaryResultTitle": "Learning Result",
   "sessionSummaryResultDescription": "Summary of this session.",
-  "sessionSummaryCoachNote": "Coach note: Your mission sentence pronunciation improved. Keep practicing speaking in the next session too.",
-  "sessionSummaryNextRecommendationTitle": "Next Recommendation",
-  "sessionSummaryNextRecommendationDescription": "Maintain momentum with short repetition practice.",
-  "sessionSummaryNextRecommendationBody": "After submitting your report, the next study session will open. Advanced content is released after admin review.",
+  "sessionSummaryReportRecommendationTitle": "Report Recommendation",
+  "sessionSummaryReportRecommendationBody": "Please report this session's learning results.",
   "sessionSummarySecondaryToSelect": "Back to selection",
-  "sessionSummaryPrimaryToReportPreview": "Go to Report Preview",
+  "sessionSummaryPrimaryToReportDraft": "Report Draft",
   "loginFailedWithError": "Login failed: {error}",
   "@loginFailedWithError": {
     "placeholders": {
@@ -173,6 +172,85 @@
   "reportPreviewChecklistBody": "1) Summarize today's learning in 1-2 sentences.\n2) Check listening and speaking practice completion.\n3) After submit, you can start the next session.",
   "reportPreviewSecondaryToSummary": "Back to Summary",
   "reportPreviewPrimaryToReport": "Write Report",
+  "reportDraftTitle": "Report Draft",
+  "reportDraftCopyButton": "Copy Report Draft",
+  "reportDraftCopied": "Report draft copied.",
+  "reportDraftDefaultSummary": "This session has been completed.",
+  "reportDraftLineSessionId": "Session ID: {sessionId}",
+  "@reportDraftLineSessionId": {
+    "placeholders": {
+      "sessionId": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDraftLineContentSet": "Content Set: {contentSetId}",
+  "@reportDraftLineContentSet": {
+    "placeholders": {
+      "contentSetId": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDraftLineMode": "Learning Mode: {mode}",
+  "@reportDraftLineMode": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDraftLineTotalItems": "Total Items: {count}",
+  "@reportDraftLineTotalItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reportDraftLineCompletedItems": "Completed Items: {count}",
+  "@reportDraftLineCompletedItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reportDraftLineAccuracy": "Accuracy: {accuracy}%",
+  "@reportDraftLineAccuracy": {
+    "placeholders": {
+      "accuracy": {
+        "type": "int"
+      }
+    }
+  },
+  "reportDraftLineCorrectAnswers": "Correct Answers: {value}",
+  "@reportDraftLineCorrectAnswers": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDraftLineAverageSimilarity": "Average Similarity: {value}",
+  "@reportDraftLineAverageSimilarity": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDraftLineSummary": "Session Summary: {summary}",
+  "@reportDraftLineSummary": {
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDraftLineListeningPending": "Listening Completed: (check required)",
+  "reportDraftLineSpeakingPending": "Speaking Completed: (check required)",
+  "reportDraftLineReflectionPending": "Learning Reflection: (write 1-2 sentences)",
   "reportGateTitle": "Report Gate",
   "reportGateRefreshTooltip": "Refresh Status",
   "reportGateBlockedMessage": "Learning is blocked until this week's report is submitted.",
@@ -341,12 +419,12 @@
   "learningSelectConfirmStartNewMessage": "Current session will be abandoned. If you want to continue it, cancel and tap resume.",
   "learningSelectConfirmCancel": "Cancel",
   "learningSelectConfirmStartNew": "Start New",
-  "learningSelectAsrPolicyTitle": "Speech Recognition Policy",
+  "learningSelectAsrPolicyTitle": "Speech Recognition Selection",
   "learningSelectAsrPolicyIntro": "Choose speech recognition mode. You can change it later.",
-  "learningSelectAsrPolicyServerOnly": "Server STT Only",
-  "learningSelectAsrPolicyOffline": "Offline Support",
-  "learningSelectAsrPolicyServerOnlyDesc": "No local model download. Offline evaluation is unavailable.",
-  "learningSelectAsrPolicyOfflineDesc": "With local ASR, speaking evaluation can continue offline.",
+  "learningSelectAsrPolicyServerOnly": "Server First Recognition",
+  "learningSelectAsrPolicyOffline": "On-device Only Recognition",
+  "learningSelectAsrPolicyServerOnlyDesc": "Use cloud STT first, then fall back to on-device recognition if needed.",
+  "learningSelectAsrPolicyOfflineDesc": "Skip cloud STT and evaluate speech with the on-device recognizer only.",
   "learningSelectAsrSyncNow": "Sync Now",
   "learningSelectAsrPendingSync": "{count} offline results pending sync.",
   "@learningSelectAsrPendingSync": {
@@ -408,7 +486,7 @@
   "sentenceLearningCompleteAndContinue": "Complete and Continue",
   "adminContactLabel": "Admin Contact",
   "loginTitle": "Learner Login",
-  "loginSubtitle": "Use development mode login until phone auth is enabled.",
+  "loginSubtitle": "Sign in with your email and password.",
   "approvalPendingTitle": "Approval Pending",
   "approvalPendingMessage": "Login is complete. Admin approval is required before learning starts.",
   "refreshStatus": "Refresh Status",
@@ -417,5 +495,21 @@
   "blockedMessage": "This account is currently restricted. Please contact admin.",
   "bootstrapMessage": "Checking your learning status...",
   "learningBlockedTitle": "Learning Temporarily Blocked",
-  "learningBlockedMessage": "Learning is paused until mandatory report is submitted."
+  "learningBlockedMessage": "Learning is paused until mandatory report is submitted.",
+  "reportDraftLineLearnerName": "Learner Name: {name}",
+  "@reportDraftLineLearnerName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reportDraftLineLearnerPhone": "Learner Phone: {phone}",
+  "@reportDraftLineLearnerPhone": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  }
 }

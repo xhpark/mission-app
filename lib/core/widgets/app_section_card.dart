@@ -8,6 +8,7 @@ class AppSectionCard extends StatelessWidget {
     this.description,
     this.icon,
     this.padding = const EdgeInsets.all(20),
+    this.titleStyle,
   });
 
   final String title;
@@ -15,9 +16,11 @@ class AppSectionCard extends StatelessWidget {
   final String? description;
   final IconData? icon;
   final EdgeInsetsGeometry padding;
+  final TextStyle? titleStyle;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: padding,
@@ -29,22 +32,40 @@ class AppSectionCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style:
+                        titleStyle ??
+                        theme.textTheme.titleLarge?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 if (icon != null)
-                  Icon(
-                    icon,
-                    size: 20,
-                    color: Theme.of(context).colorScheme.primary,
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 20,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
                   ),
               ],
             ),
             if (description != null) ...[
-              const SizedBox(height: 6),
-              Text(description!, style: Theme.of(context).textTheme.bodyMedium),
+              const SizedBox(height: 8),
+              Text(
+                description!,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
+                ),
+              ),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             child,
           ],
         ),

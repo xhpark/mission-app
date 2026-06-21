@@ -42,13 +42,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get menuSignOut => '로그아웃';
 
   @override
-  String get categoryLabel => '카테고리';
+  String get categoryLabel => '학습 선택';
 
   @override
-  String get levelLabel => '난이도';
+  String get levelLabel => '난이도 선택';
 
   @override
-  String get modeLabel => '학습 모드';
+  String get modeLabel => '학습모드 선택';
 
   @override
   String get guideTitle => '학습 가이드';
@@ -99,7 +99,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get interactiveProgressTitle => '진행 상태';
 
   @override
-  String get interactiveProgressDescription => '현재 단계와 남은 시간을 확인하세요.';
+  String get interactiveProgressDescription => '현재 단계와 진행 상태를 확인하세요.';
 
   @override
   String interactiveRemainingSeconds(int seconds) {
@@ -250,6 +250,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sessionSummaryStatCorrectAnswers => '정답 수';
 
   @override
+  String get sessionSummaryStatAverageSimilarity => '유사도 평균';
+
+  @override
   String get sessionSummaryStatSessionId => '세션 ID';
 
   @override
@@ -271,25 +274,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sessionSummaryResultDescription => '오늘 세션에서 진행한 요약입니다.';
 
   @override
-  String get sessionSummaryCoachNote =>
-      '코치 노트: 미션 문장의 발음이 개선되었습니다. 다음 세션에서도 말하기 연습을 이어가세요.';
+  String get sessionSummaryReportRecommendationTitle => '리포트 추천';
 
   @override
-  String get sessionSummaryNextRecommendationTitle => '다음 추천';
-
-  @override
-  String get sessionSummaryNextRecommendationDescription =>
-      '짧은 반복 학습으로 성취감을 유지해 보세요.';
-
-  @override
-  String get sessionSummaryNextRecommendationBody =>
-      '리포트를 제출하면 다음 학습 세션이 열리고, 관리자 확인 이후 고급 콘텐츠가 순차적으로 제공됩니다.';
+  String get sessionSummaryReportRecommendationBody => '이번 세션 학습결과를 리포트해 주세요.';
 
   @override
   String get sessionSummarySecondaryToSelect => '선택 화면으로';
 
   @override
-  String get sessionSummaryPrimaryToReportPreview => '리포트 프리뷰로';
+  String get sessionSummaryPrimaryToReportDraft => '리포트 초안';
 
   @override
   String loginFailedWithError(String error) {
@@ -343,6 +337,72 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get reportPreviewPrimaryToReport => '리포트 작성';
+
+  @override
+  String get reportDraftTitle => '리포트 초안';
+
+  @override
+  String get reportDraftCopyButton => '리포트 초안 복사';
+
+  @override
+  String get reportDraftCopied => '리포트 초안을 복사했습니다.';
+
+  @override
+  String get reportDraftDefaultSummary => '이번 세션 학습을 완료했습니다.';
+
+  @override
+  String reportDraftLineSessionId(String sessionId) {
+    return '세션 ID: $sessionId';
+  }
+
+  @override
+  String reportDraftLineContentSet(String contentSetId) {
+    return '콘텐츠 세트: $contentSetId';
+  }
+
+  @override
+  String reportDraftLineMode(String mode) {
+    return '학습 모드: $mode';
+  }
+
+  @override
+  String reportDraftLineTotalItems(int count) {
+    return '총 학습 항목: $count';
+  }
+
+  @override
+  String reportDraftLineCompletedItems(int count) {
+    return '완료 항목: $count';
+  }
+
+  @override
+  String reportDraftLineAccuracy(int accuracy) {
+    return '정확도: $accuracy%';
+  }
+
+  @override
+  String reportDraftLineCorrectAnswers(String value) {
+    return '정답 수: $value';
+  }
+
+  @override
+  String reportDraftLineAverageSimilarity(String value) {
+    return '유사도 평균: $value';
+  }
+
+  @override
+  String reportDraftLineSummary(String summary) {
+    return '세션 요약: $summary';
+  }
+
+  @override
+  String get reportDraftLineListeningPending => '듣기 완료 여부: (체크 필요)';
+
+  @override
+  String get reportDraftLineSpeakingPending => '말하기 완료 여부: (체크 필요)';
+
+  @override
+  String get reportDraftLineReflectionPending => '학습 소감: (1~2문장 작성)';
 
   @override
   String get reportGateTitle => '리포트 게이트';
@@ -618,28 +678,28 @@ class AppLocalizationsKo extends AppLocalizations {
   String get learningSelectConfirmStartNew => '새로 시작';
 
   @override
-  String get learningSelectAsrPolicyTitle => '음성 인식 정책';
+  String get learningSelectAsrPolicyTitle => '음성 인식 선택';
 
   @override
   String get learningSelectAsrPolicyIntro =>
       '음성 인식 정책을 선택하세요. 이후에도 변경할 수 있습니다.';
 
   @override
-  String get learningSelectAsrPolicyServerOnly => '서버 STT 전용';
+  String get learningSelectAsrPolicyServerOnly => '서버 우선 인식';
 
   @override
-  String get learningSelectAsrPolicyOffline => '오프라인 지원';
+  String get learningSelectAsrPolicyOffline => '폰 전용 인식';
 
   @override
   String get learningSelectAsrPolicyServerOnlyDesc =>
-      '로컬 모델 다운로드 없이 사용합니다. 오프라인 평가는 불가합니다.';
+      '서버 STT를 먼저 사용하고 필요하면 기기 내 음성 인식으로 보완합니다.';
 
   @override
   String get learningSelectAsrPolicyOfflineDesc =>
-      '로컬 ASR 사용 시 오프라인에서도 말하기 평가를 계속할 수 있습니다.';
+      '서버 STT를 건너뛰고 기기 내 음성 인식으로만 말하기를 평가합니다.';
 
   @override
-  String get learningSelectAsrSyncNow => '지금 동기화';
+  String get learningSelectAsrSyncNow => '동기화';
 
   @override
   String learningSelectAsrPendingSync(int count) {
@@ -647,7 +707,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get learningSelectAsrNoPendingSync => '오프라인 동기화 대기 항목이 없습니다.';
+  String get learningSelectAsrNoPendingSync => '항목 없음';
 
   @override
   String get learningSelectCategoryDaily => '일상 회화';
@@ -740,38 +800,48 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sentenceLearningCompleteAndContinue => '완료하고 다음으로';
 
   @override
-  String get adminContactLabel => '??? ???';
+  String get adminContactLabel => '관리자 연락처';
 
   @override
-  String get loginTitle => '??? ???';
+  String get loginTitle => '학습자 로그인';
 
   @override
-  String get loginSubtitle => '???? ?? ?? ??? ?? ?? ????? ?????.';
+  String get loginSubtitle => '이메일과 비밀번호로 로그인해 주세요.';
 
   @override
-  String get approvalPendingTitle => '?? ??';
+  String get approvalPendingTitle => '승인 대기';
 
   @override
-  String get approvalPendingMessage => '???? ???????. ?? ?? ? ??? ??? ?????.';
+  String get approvalPendingMessage => '관리자 승인 대기 중입니다. 승인 후 학습을 시작할 수 있습니다.';
 
   @override
-  String get refreshStatus => '?? ????';
+  String get refreshStatus => '상태 새로고침';
 
   @override
-  String get backToLogin => '????? ????';
+  String get backToLogin => '로그인으로 돌아가기';
 
   @override
-  String get blockedTitle => '?? ??';
+  String get blockedTitle => '이용 제한';
 
   @override
-  String get blockedMessage => '?? ??? ?? ?????. ????? ??? ???.';
+  String get blockedMessage => '이 계정은 사용할 수 없습니다. 관리자에게 문의해 주세요.';
 
   @override
-  String get bootstrapMessage => '?? ??? ???? ????...';
+  String get bootstrapMessage => '학습 상태를 확인하는 중입니다...';
 
   @override
-  String get learningBlockedTitle => '?? ?? ??';
+  String get learningBlockedTitle => '학습 시작 제한';
 
   @override
-  String get learningBlockedMessage => '?? ???? ??? ??? ??? ?? ?????.';
+  String get learningBlockedMessage => '관리자 승인 후 학습을 시작할 수 있습니다.';
+
+  @override
+  String reportDraftLineLearnerName(String name) {
+    return '학습자 이름: $name';
+  }
+
+  @override
+  String reportDraftLineLearnerPhone(String phone) {
+    return '학습자 전화번호: $phone';
+  }
 }

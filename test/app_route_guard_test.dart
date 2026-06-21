@@ -37,51 +37,125 @@ void main() {
     expect(target, isNull);
   });
 
-  test('routes to report gate when report is required', () {
+  test('redirects to login before bootstrap when not signed in', () {
     final target = AppRouteGuard.redirect(
       const AppRouteGuardInput(
-        location: '/select',
-        isBootstrapping: false,
-        signedIn: true,
-        isDevelopmentAnonymous: true,
-        sessionHydrated: true,
-        hasCurrentSession: true,
-        reportRequired: true,
+        location: '/bootstrap',
+        isBootstrapping: true,
+        signedIn: false,
+        isDevelopmentAnonymous: false,
+        sessionHydrated: false,
+        hasCurrentSession: false,
+        reportRequired: false,
         bootstrapSession: null,
       ),
     );
 
-    expect(target, '/report-gate');
+    expect(target, '/login');
   });
 
-  test('allows report preview when report is required', () {
+  test('does not force bootstrap redirect while loading if session exists', () {
     final target = AppRouteGuard.redirect(
-      const AppRouteGuardInput(
-        location: '/report-preview',
-        isBootstrapping: false,
+      AppRouteGuardInput(
+        location: '/select',
+        isBootstrapping: true,
         signedIn: true,
-        isDevelopmentAnonymous: true,
+        isDevelopmentAnonymous: false,
         sessionHydrated: true,
         hasCurrentSession: true,
-        reportRequired: true,
-        bootstrapSession: null,
+        reportRequired: false,
+        bootstrapSession: BootstrapSession.fallback(),
       ),
     );
 
     expect(target, isNull);
   });
 
-  test('does not force report gate when report is required but no session', () {
+  test('keeps select route when weekly report is required', () {
     final target = AppRouteGuard.redirect(
-      const AppRouteGuardInput(
+      AppRouteGuardInput(
         location: '/select',
         isBootstrapping: false,
         signedIn: true,
-        isDevelopmentAnonymous: true,
+        isDevelopmentAnonymous: false,
         sessionHydrated: true,
-        hasCurrentSession: false,
+        hasCurrentSession: true,
         reportRequired: true,
-        bootstrapSession: null,
+        bootstrapSession: BootstrapSession.fallback(),
+      ),
+    );
+
+    expect(target, isNull);
+  });
+
+  test('allows report preview when weekly report is required', () {
+    final target = AppRouteGuard.redirect(
+      AppRouteGuardInput(
+        location: '/report-preview',
+        isBootstrapping: false,
+        signedIn: true,
+        isDevelopmentAnonymous: false,
+        sessionHydrated: true,
+        hasCurrentSession: true,
+        reportRequired: true,
+        bootstrapSession: BootstrapSession.fallback(),
+      ),
+    );
+
+    expect(target, isNull);
+  });
+
+  test(
+    'does not force report gate when weekly report is required but no session',
+    () {
+      final target = AppRouteGuard.redirect(
+        AppRouteGuardInput(
+          location: '/select',
+          isBootstrapping: false,
+          signedIn: true,
+          isDevelopmentAnonymous: false,
+          sessionHydrated: true,
+          hasCurrentSession: false,
+          reportRequired: true,
+          bootstrapSession: BootstrapSession.fallback(),
+        ),
+      );
+
+      expect(target, isNull);
+    },
+  );
+
+  test(
+    'redirects study route to report preview when weekly report is required',
+    () {
+      final target = AppRouteGuard.redirect(
+        AppRouteGuardInput(
+          location: '/sentence-learning',
+          isBootstrapping: false,
+          signedIn: true,
+          isDevelopmentAnonymous: false,
+          sessionHydrated: true,
+          hasCurrentSession: true,
+          reportRequired: true,
+          bootstrapSession: BootstrapSession.fallback(),
+        ),
+      );
+
+      expect(target, '/report-preview');
+    },
+  );
+
+  test('keeps summary route accessible when weekly report is required', () {
+    final target = AppRouteGuard.redirect(
+      AppRouteGuardInput(
+        location: '/session-summary',
+        isBootstrapping: false,
+        signedIn: true,
+        isDevelopmentAnonymous: false,
+        sessionHydrated: true,
+        hasCurrentSession: true,
+        reportRequired: true,
+        bootstrapSession: BootstrapSession.fallback(),
       ),
     );
 
@@ -122,7 +196,24 @@ void main() {
     expect(target, isNull);
   });
 
-  test('redirects development user to select for session-required route', () {
+  test('allows admin dashboard without active learning session', () {
+    final target = AppRouteGuard.redirect(
+      AppRouteGuardInput(
+        location: '/admin-dashboard',
+        isBootstrapping: false,
+        signedIn: true,
+        isDevelopmentAnonymous: false,
+        sessionHydrated: true,
+        hasCurrentSession: false,
+        reportRequired: false,
+        bootstrapSession: BootstrapSession.fallback(),
+      ),
+    );
+
+    expect(target, isNull);
+  });
+
+  test('allows development user into session-required route', () {
     final target = AppRouteGuard.redirect(
       const AppRouteGuardInput(
         location: '/sentence-test/choice',
@@ -136,7 +227,7 @@ void main() {
       ),
     );
 
-    expect(target, '/select');
+    expect(target, isNull);
   });
 
   test('redirects report route to select when there is no active session', () {
@@ -156,10 +247,78 @@ void main() {
     expect(target, '/select');
   });
 
+  test('allows report route when there is an active session', () {
+    final target = AppRouteGuard.redirect(
+      AppRouteGuardInput(
+        location: '/report',
+        isBootstrapping: false,
+        signedIn: true,
+        isDevelopmentAnonymous: false,
+        sessionHydrated: true,
+        hasCurrentSession: true,
+        reportRequired: true,
+        bootstrapSession: BootstrapSession.fallback(),
+      ),
+    );
+
+    expect(target, isNull);
+  });
+
   test('keeps guide route accessible for development user without session', () {
     final target = AppRouteGuard.redirect(
       const AppRouteGuardInput(
         location: '/guide',
+        isBootstrapping: false,
+        signedIn: true,
+        isDevelopmentAnonymous: true,
+        sessionHydrated: true,
+        hasCurrentSession: false,
+        reportRequired: false,
+        bootstrapSession: null,
+      ),
+    );
+
+    expect(target, isNull);
+  });
+
+  test('redirects development user away from login', () {
+    final target = AppRouteGuard.redirect(
+      const AppRouteGuardInput(
+        location: '/login',
+        isBootstrapping: false,
+        signedIn: true,
+        isDevelopmentAnonymous: true,
+        sessionHydrated: true,
+        hasCurrentSession: false,
+        reportRequired: false,
+        bootstrapSession: null,
+      ),
+    );
+
+    expect(target, '/select');
+  });
+
+  test('allows development user into flash word speaking test route', () {
+    final target = AppRouteGuard.redirect(
+      const AppRouteGuardInput(
+        location: '/flash-word-test/speaking',
+        isBootstrapping: false,
+        signedIn: true,
+        isDevelopmentAnonymous: true,
+        sessionHydrated: true,
+        hasCurrentSession: false,
+        reportRequired: false,
+        bootstrapSession: null,
+      ),
+    );
+
+    expect(target, isNull);
+  });
+
+  test('allows development user into flash sentence test select route', () {
+    final target = AppRouteGuard.redirect(
+      const AppRouteGuardInput(
+        location: '/flash-sentence-test-select',
         isBootstrapping: false,
         signedIn: true,
         isDevelopmentAnonymous: true,

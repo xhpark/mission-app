@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/firebase/firebase_providers.dart';
+import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/bootstrap/presentation/controllers/bootstrap_controller.dart';
 import '../../features/bootstrap/presentation/screens/approval_pending_screen.dart';
@@ -11,12 +12,14 @@ import '../../features/bootstrap/presentation/screens/bootstrap_screen.dart';
 import '../../features/bootstrap/presentation/screens/learning_blocked_screen.dart';
 import '../../features/flash_sentence_learning/presentation/screens/flash_sentence_learning_screen.dart';
 import '../../features/flash_sentence_test/presentation/screens/flash_sentence_test_choice_screen.dart';
+import '../../features/flash_sentence_test/presentation/screens/flash_sentence_test_select_screen.dart';
 import '../../features/flash_sentence_test/presentation/screens/flash_sentence_test_speaking_screen.dart';
 import '../../features/flash_word_learning/presentation/screens/flash_word_learning_screen.dart';
+import '../../features/flash_word_test/presentation/screens/flash_word_test_select_screen.dart';
+import '../../features/flash_word_test/presentation/screens/flash_word_test_speaking_screen.dart';
 import '../../features/flash_word_test/presentation/screens/flash_word_test_screen.dart';
 import '../../features/learning_select/presentation/screens/learning_guide_screen.dart';
 import '../../features/learning_select/presentation/screens/learning_select_screen.dart';
-import '../../features/report_gate/presentation/screens/report_gate_screen.dart';
 import '../../features/reporting/presentation/controllers/report_requirement_controller.dart';
 import '../../features/reporting/presentation/screens/report_preview_screen.dart';
 import '../../features/reporting/presentation/screens/report_screen.dart';
@@ -69,8 +72,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const FlashWordTestScreen(),
       ),
       GoRoute(
+        path: '/flash-word-test-select',
+        builder: (_, _) => const FlashWordTestSelectScreen(),
+      ),
+      GoRoute(
+        path: '/flash-word-test/speaking',
+        builder: (_, _) => const FlashWordTestSpeakingScreen(),
+      ),
+      GoRoute(
         path: '/flash-sentence-learning',
         builder: (_, _) => const FlashSentenceLearningScreen(),
+      ),
+      GoRoute(
+        path: '/flash-sentence-test-select',
+        builder: (_, _) => const FlashSentenceTestSelectScreen(),
       ),
       GoRoute(
         path: '/flash-sentence-test/choice',
@@ -91,23 +106,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/resume', builder: (_, _) => const ResumeScreen()),
       GoRoute(
-        path: '/report-gate',
-        builder: (_, _) => const ReportGateScreen(),
+        path: '/admin-dashboard',
+        builder: (_, _) => const AdminDashboardScreen(),
       ),
     ],
     redirect: (context, state) {
       final bootstrapState = ref.read(bootstrapControllerProvider);
       final authState = ref.read(authStateChangesProvider);
+      final currentAuthUser = ref.read(firebaseAuthProvider).currentUser;
       final developmentSession = ref.read(developmentSessionProvider);
       final currentSession = ref.read(currentStudySessionProvider);
       final sessionHydrated = ref.read(currentStudySessionHydratedProvider);
       final reportRequired = ref.read(reportRequirementProvider);
-      final bootstrapSession = bootstrapState.asData?.value;
+      final bootstrapSession = bootstrapState.hasValue
+          ? bootstrapState.requireValue
+          : null;
       final reportGateBlocked =
           (bootstrapSession?.reportGateStage ?? 'none') != 'none';
 
       final isBootstrapping = bootstrapState.isLoading;
-      final signedInUser = authState.asData?.value;
+      final signedInUser = authState.asData?.value ?? currentAuthUser;
       final signedIn = signedInUser != null || developmentSession;
       final isDevelopmentAnonymous =
           (signedInUser?.isAnonymous ?? false) || developmentSession;
