@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import codecs
 import json
 import pathlib
 import re
@@ -9,7 +10,15 @@ import sys
 
 
 def _decode_dart_string(value: str) -> str:
-    return bytes(value, "utf-8").decode("unicode_escape")
+    # Entries may be written either as raw UTF-8 (e.g. 'สวัสดี') or as \uXXXX
+    # escapes. Raw non-ASCII is already correct; only ASCII-with-escapes needs
+    # decoding (and unicode_escape on raw UTF-8 would corrupt it).
+    if not value.isascii():
+        return value
+    try:
+        return codecs.decode(value, "unicode_escape")
+    except Exception:
+        return value
 
 
 def _field(block: str, name: str) -> str:
