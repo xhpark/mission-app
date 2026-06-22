@@ -11,13 +11,13 @@ void main() {
       final dailyWords = wordsByCategory('daily');
       final missionWords = wordsByCategory('mission');
 
-      expect(dailySentences.length, 15);
+      expect(dailySentences.length, 18);
       expect(missionSentences.length, 10);
-      expect(dailySentences.length + missionSentences.length, 25);
+      expect(dailySentences.length + missionSentences.length, 28);
 
-      expect(dailyWords.length, 31);
+      expect(dailyWords.length, 35);
       expect(missionWords.length, 16);
-      expect(dailyWords.length + missionWords.length, 47);
+      expect(dailyWords.length + missionWords.length, 51);
     });
 
     test('sentence IDs are unique and order is contiguous by category', () {

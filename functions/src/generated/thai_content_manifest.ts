@@ -4,19 +4,19 @@
 /* eslint-disable */
 export const thaiContentManifest = {
   "version": 1,
-  "sourceHash": "fnv1a32:1da3cb37",
+  "sourceHash": "fnv1a32:8d16f4ce",
   "sourcePath": "lib/features/learning_content/data/thai_learning_content.dart",
   "contentSets": {
     "daily-beginner-default": {
       "category": "daily",
       "level": "beginner",
       "modeTotals": {
-        "sentence_learning": 15,
-        "sentence_test": 15,
-        "flash_sentence_learning": 15,
-        "flash_sentence_test": 15,
-        "flash_word_learning": 31,
-        "flash_word_test": 31
+        "sentence_learning": 18,
+        "sentence_test": 18,
+        "flash_sentence_learning": 18,
+        "flash_sentence_test": 18,
+        "flash_word_learning": 35,
+        "flash_word_test": 35
       },
       "items": {
         "THS_D001": {
@@ -78,6 +78,18 @@ export const thaiContentManifest = {
         "THS_D015": {
           "type": "sentence",
           "expectedText": "คุณยอดเยี่ยมที่สุด"
+        },
+        "THS_D016": {
+          "type": "sentence",
+          "expectedText": "ผม/ดิฉันชื่อ ... (ครับ/ค่ะ)"
+        },
+        "THS_D017": {
+          "type": "sentence",
+          "expectedText": "ห้องน้ำอยู่ที่ไหน (ครับ/คะ)"
+        },
+        "THS_D018": {
+          "type": "sentence",
+          "expectedText": "เก่งมาก (ครับ/ค่ะ)"
         },
         "THW_D001": {
           "type": "word",
@@ -202,6 +214,22 @@ export const thaiContentManifest = {
         "THW_D031": {
           "type": "word",
           "expectedText": "ขอบคุณ"
+        },
+        "THW_D032": {
+          "type": "word",
+          "expectedText": "ผม"
+        },
+        "THW_D033": {
+          "type": "word",
+          "expectedText": "ชื่อ"
+        },
+        "THW_D034": {
+          "type": "word",
+          "expectedText": "ห้องน้ำ"
+        },
+        "THW_D035": {
+          "type": "word",
+          "expectedText": "เก่ง"
         }
       }
     },
@@ -209,12 +237,12 @@ export const thaiContentManifest = {
       "category": "daily",
       "level": "intermediate",
       "modeTotals": {
-        "sentence_learning": 15,
-        "sentence_test": 15,
-        "flash_sentence_learning": 15,
-        "flash_sentence_test": 15,
-        "flash_word_learning": 31,
-        "flash_word_test": 31
+        "sentence_learning": 18,
+        "sentence_test": 18,
+        "flash_sentence_learning": 18,
+        "flash_sentence_test": 18,
+        "flash_word_learning": 35,
+        "flash_word_test": 35
       },
       "items": {
         "THS_D001": {
@@ -276,6 +304,18 @@ export const thaiContentManifest = {
         "THS_D015": {
           "type": "sentence",
           "expectedText": "คุณยอดเยี่ยมที่สุด"
+        },
+        "THS_D016": {
+          "type": "sentence",
+          "expectedText": "ผม/ดิฉันชื่อ ... (ครับ/ค่ะ)"
+        },
+        "THS_D017": {
+          "type": "sentence",
+          "expectedText": "ห้องน้ำอยู่ที่ไหน (ครับ/คะ)"
+        },
+        "THS_D018": {
+          "type": "sentence",
+          "expectedText": "เก่งมาก (ครับ/ค่ะ)"
         },
         "THW_D001": {
           "type": "word",
@@ -400,6 +440,22 @@ export const thaiContentManifest = {
         "THW_D031": {
           "type": "word",
           "expectedText": "ขอบคุณ"
+        },
+        "THW_D032": {
+          "type": "word",
+          "expectedText": "ผม"
+        },
+        "THW_D033": {
+          "type": "word",
+          "expectedText": "ชื่อ"
+        },
+        "THW_D034": {
+          "type": "word",
+          "expectedText": "ห้องน้ำ"
+        },
+        "THW_D035": {
+          "type": "word",
+          "expectedText": "เก่ง"
         }
       }
     },
@@ -407,12 +463,12 @@ export const thaiContentManifest = {
       "category": "daily",
       "level": "advanced",
       "modeTotals": {
-        "sentence_learning": 15,
-        "sentence_test": 15,
-        "flash_sentence_learning": 15,
-        "flash_sentence_test": 15,
-        "flash_word_learning": 31,
-        "flash_word_test": 31
+        "sentence_learning": 18,
+        "sentence_test": 18,
+        "flash_sentence_learning": 18,
+        "flash_sentence_test": 18,
+        "flash_word_learning": 35,
+        "flash_word_test": 35
       },
       "items": {
         "THS_D001": {
@@ -474,6 +530,18 @@ export const thaiContentManifest = {
         "THS_D015": {
           "type": "sentence",
           "expectedText": "คุณยอดเยี่ยมที่สุด"
+        },
+        "THS_D016": {
+          "type": "sentence",
+          "expectedText": "ผม/ดิฉันชื่อ ... (ครับ/ค่ะ)"
+        },
+        "THS_D017": {
+          "type": "sentence",
+          "expectedText": "ห้องน้ำอยู่ที่ไหน (ครับ/คะ)"
+        },
+        "THS_D018": {
+          "type": "sentence",
+          "expectedText": "เก่งมาก (ครับ/ค่ะ)"
         },
         "THW_D001": {
           "type": "word",
@@ -598,6 +666,22 @@ export const thaiContentManifest = {
         "THW_D031": {
           "type": "word",
           "expectedText": "ขอบคุณ"
+        },
+        "THW_D032": {
+          "type": "word",
+          "expectedText": "ผม"
+        },
+        "THW_D033": {
+          "type": "word",
+          "expectedText": "ชื่อ"
+        },
+        "THW_D034": {
+          "type": "word",
+          "expectedText": "ห้องน้ำ"
+        },
+        "THW_D035": {
+          "type": "word",
+          "expectedText": "เก่ง"
         }
       }
     },
