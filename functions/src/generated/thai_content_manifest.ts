@@ -4,7 +4,7 @@
 /* eslint-disable */
 export const thaiContentManifest = {
   "version": 1,
-  "sourceHash": "fnv1a32:8d16f4ce",
+  "sourceHash": "fnv1a32:bda7f601",
   "sourcePath": "lib/features/learning_content/data/thai_learning_content.dart",
   "contentSets": {
     "daily-beginner-default": {

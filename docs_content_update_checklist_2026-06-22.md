@@ -14,6 +14,7 @@
 - **콘텐츠 표시 = 번들 Dart**: 앱은 번들된 Dart에서 텍스트를 읽는다. 서버는 매니페스트로 채점·문항수만 담당한다. **Firestore `content_sets`는 매니페스트에 없는 셋의 최종 폴백일 뿐 실사용되지 않는다(F6 무관).**
 - **콘텐츠 오디오 = 로컬 에셋**: `audioUrl`은 비고, 앱은 `assets/audio/...` 로컬 파일을 재생한다. Firebase Storage 업로드는 불필요.
 - **발음 룩업은 `putIfAbsent`**: 먼저 등록된 토큰이 우선이므로 신규 콘텐츠가 기존 발음 매핑을 덮지 못한다 → 기존 발음 테스트 안전.
+- **온디바이스 오디오 캐시는 자동 무효화됨**: `just_audio`는 에셋을 파일 경로로만 캐싱하고 내용 변경을 감지하지 못한다(2026-06-23 발견 — 같은 파일명으로 오디오를 갱신해도 기존 설치 사용자는 캐시된 옛 음성을 계속 들음). `tool/build_content_manifest.dart`가 매니페스트와 함께 `lib/features/learning_content/data/thai_content_version.dart`(소스 해시 상수)를 생성하고, 앱 시작 시 `ContentAudioCacheInvalidator`가 SharedPreferences에 저장된 버전과 비교해 다르면 `just_audio_cache`를 통째로 삭제한다. **콘텐츠 변경 후 `python scripts/content_pipeline.py manifest`만 실행하면 자동으로 처리되므로 별도 수동 단계가 필요 없다.**
 
 ## 1. 변경 유형별 영향
 

@@ -5,12 +5,14 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
+import 'core/services/content_audio_cache_invalidator.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await _activateFirebaseAppCheck();
+  await ContentAudioCacheInvalidator.invalidateIfContentChanged();
 
   runApp(const ProviderScope(child: MissionApp()));
 }

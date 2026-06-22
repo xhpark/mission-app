@@ -34,6 +34,16 @@ Full rationale + per-change-type impact: `docs_content_update_checklist_2026-06-
    `assets/audio/word/<id>.mp3`. Leave `audioPath` empty in the Dart entry
    (it auto-resolves from the id).
 
+## On-device audio cache (handled automatically — know this exists)
+
+`just_audio` caches bundled assets on disk keyed by *path only*, not content.
+Regenerating an existing id's mp3 (e.g. fixing a bad pronunciation) would
+otherwise leave installed users hearing the stale cached clip forever. The
+`manifest` step writes `lib/features/learning_content/data/thai_content_version.dart`
+(a source-hash const); `ContentAudioCacheInvalidator` wipes `just_audio_cache`
+at app startup whenever that hash changes. No manual step needed — just don't
+skip the `manifest` step after an audio-affecting change.
+
 ## Workflow
 
 ```

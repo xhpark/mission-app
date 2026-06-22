@@ -17,6 +17,8 @@ import 'package:mission_app/features/learning_content/data/thai_learning_content
 const _sourceRelativePath =
     'lib/features/learning_content/data/thai_learning_content.dart';
 const _outputRelativePath = 'functions/src/generated/thai_content_manifest.ts';
+const _versionOutputRelativePath =
+    'lib/features/learning_content/data/thai_content_version.dart';
 
 const _categories = <String>['daily', 'mission'];
 const _levels = <String>['beginner', 'intermediate', 'advanced'];
@@ -40,16 +42,23 @@ void main(List<String> args) {
     return;
   }
 
-  final manifest = _buildManifest(sourceFile.readAsBytesSync());
+  final sourceBytes = sourceFile.readAsBytesSync();
+  final manifest = _buildManifest(sourceBytes);
   final json = const JsonEncoder.withIndent('  ').convert(manifest);
   final encoded = _renderTsModule(json);
   final outputFile = File(_outputRelativePath);
+
+  final versionEncoded = _renderVersionDartFile(manifest['sourceHash'] as String);
+  final versionOutputFile = File(_versionOutputRelativePath);
 
   if (checkOnly) {
     final current = outputFile.existsSync()
         ? outputFile.readAsStringSync().replaceAll('\r\n', '\n').trim()
         : '';
-    if (current != encoded.trim()) {
+    final currentVersion = versionOutputFile.existsSync()
+        ? versionOutputFile.readAsStringSync().replaceAll('\r\n', '\n').trim()
+        : '';
+    if (current != encoded.trim() || currentVersion != versionEncoded.trim()) {
       stderr.writeln(
         'Content manifest is out of date. Run: dart run tool/build_content_manifest.dart',
       );
@@ -63,6 +72,26 @@ void main(List<String> args) {
   outputFile.parent.createSync(recursive: true);
   outputFile.writeAsStringSync('$encoded\n');
   stdout.writeln('Wrote $_outputRelativePath');
+
+  versionOutputFile.parent.createSync(recursive: true);
+  versionOutputFile.writeAsStringSync('$versionEncoded\n');
+  stdout.writeln('Wrote $_versionOutputRelativePath');
+}
+
+// The client (app) needs to know when bundled content/audio has changed so it
+// can invalidate the just_audio asset cache (which keys only by asset path,
+// not content — see docs_content_update_checklist_2026-06-22.md). Expose the
+// same source hash used for server drift detection as a client-readable const.
+String _renderVersionDartFile(String sourceHash) {
+  final buffer = StringBuffer()
+    ..writeln('// GENERATED FILE — do not edit by hand.')
+    ..writeln('// Source of truth: $_sourceRelativePath')
+    ..writeln('// Regenerate: dart run tool/build_content_manifest.dart')
+    ..writeln('//')
+    ..writeln('// Bump whenever thai_learning_content.dart changes; used to')
+    ..writeln('// invalidate the on-device audio cache when content/audio is updated.')
+    ..writeln("const thaiContentVersion = '$sourceHash';");
+  return buffer.toString();
 }
 
 String _renderTsModule(String json) {
