@@ -50,6 +50,8 @@ dependencies:
   cloud_firestore: ^6.2.0
   cloud_functions: ^6.1.0
   firebase_storage: ^13.2.0
+  connectivity_plus: ^7.0.0
+  crypto: ^3.0.6
 
   intl: any
   sherpa_onnx: ^1.12.39

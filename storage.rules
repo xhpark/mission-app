@@ -20,6 +20,14 @@ service firebase.storage {
       allow write: if false;
     }
 
+    // On-device speech recognition model bundle (Wi-Fi-gated download from
+    // the app). Uploaded by operators via scripts/upload_asr_model.py, never
+    // written by clients.
+    match /asr_models/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }
