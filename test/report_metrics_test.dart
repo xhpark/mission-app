@@ -12,6 +12,7 @@ void main() {
       attemptedAnswers: 0,
       trackIndices: <StudyFlowTrack, int>{},
       speakingSimilarityByItemId: <String, int>{},
+      completedTracks: <StudyFlowTrack>{},
     );
 
     final metrics = buildReportMetrics(flow);
@@ -38,6 +39,7 @@ void main() {
           'sentence-1': 32,
           'sentence-2': 44,
         },
+        completedTracks: <StudyFlowTrack>{},
       );
 
       final metrics = buildReportMetrics(flow);

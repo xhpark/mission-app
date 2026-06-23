@@ -25,6 +25,7 @@ class StudyFlowState {
     required this.attemptedAnswers,
     required this.trackIndices,
     required this.speakingSimilarityByItemId,
+    required this.completedTracks,
   });
 
   final String sessionId;
@@ -34,8 +35,12 @@ class StudyFlowState {
   final int attemptedAnswers;
   final Map<StudyFlowTrack, int> trackIndices;
   final Map<String, int> speakingSimilarityByItemId;
+  final Set<StudyFlowTrack> completedTracks;
 
   int indexOf(StudyFlowTrack track) => trackIndices[track] ?? 0;
+
+  bool isTrackCompleted(StudyFlowTrack track) =>
+      completedTracks.contains(track);
 
   int? get averageSimilarityScore {
     if (speakingSimilarityByItemId.isEmpty) {
@@ -56,6 +61,7 @@ class StudyFlowState {
     int? attemptedAnswers,
     Map<StudyFlowTrack, int>? trackIndices,
     Map<String, int>? speakingSimilarityByItemId,
+    Set<StudyFlowTrack>? completedTracks,
   }) {
     return StudyFlowState(
       sessionId: sessionId ?? this.sessionId,
@@ -66,6 +72,7 @@ class StudyFlowState {
       trackIndices: trackIndices ?? this.trackIndices,
       speakingSimilarityByItemId:
           speakingSimilarityByItemId ?? this.speakingSimilarityByItemId,
+      completedTracks: completedTracks ?? this.completedTracks,
     );
   }
 
@@ -80,6 +87,7 @@ class StudyFlowState {
         (track, index) => MapEntry(track.name, index),
       ),
       'speakingSimilarityByItemId': speakingSimilarityByItemId,
+      'completedTracks': completedTracks.map((track) => track.name).toList(),
     };
   }
 
@@ -111,6 +119,20 @@ class StudyFlowState {
       }
     }
 
+    final rawCompletedTracks = json['completedTracks'];
+    final completedTracks = <StudyFlowTrack>{};
+    if (rawCompletedTracks is List) {
+      for (final entry in rawCompletedTracks) {
+        final track = StudyFlowTrack.values.cast<StudyFlowTrack?>().firstWhere(
+          (value) => value?.name == entry,
+          orElse: () => null,
+        );
+        if (track != null) {
+          completedTracks.add(track);
+        }
+      }
+    }
+
     return StudyFlowState(
       sessionId: json['sessionId'] as String? ?? '',
       totalItems: (json['totalItems'] as num?)?.toInt() ?? 0,
@@ -119,6 +141,7 @@ class StudyFlowState {
       attemptedAnswers: (json['attemptedAnswers'] as num?)?.toInt() ?? 0,
       trackIndices: trackIndices,
       speakingSimilarityByItemId: speakingSimilarityByItemId,
+      completedTracks: completedTracks,
     );
   }
 
@@ -130,6 +153,7 @@ class StudyFlowState {
     attemptedAnswers: 0,
     trackIndices: <StudyFlowTrack, int>{},
     speakingSimilarityByItemId: <String, int>{},
+    completedTracks: <StudyFlowTrack>{},
   );
 }
 
@@ -158,6 +182,7 @@ class StudyFlowController extends Notifier<StudyFlowState> {
       attemptedAnswers: 0,
       trackIndices: const <StudyFlowTrack, int>{},
       speakingSimilarityByItemId: const <String, int>{},
+      completedTracks: const <StudyFlowTrack>{},
     );
     unawaited(persistNow());
   }
@@ -185,6 +210,12 @@ class StudyFlowController extends Notifier<StudyFlowState> {
 
     final updatedIndices = Map<StudyFlowTrack, int>.from(state.trackIndices)
       ..[track] = hasNext ? next : current;
+    final updatedCompletedTracks = Set<StudyFlowTrack>.from(
+      state.completedTracks,
+    );
+    if (!hasNext) {
+      updatedCompletedTracks.add(track);
+    }
 
     state = state.copyWith(
       trackIndices: updatedIndices,
@@ -195,6 +226,7 @@ class StudyFlowController extends Notifier<StudyFlowState> {
       correctAnswers: isCorrectAttempt
           ? state.correctAnswers + 1
           : state.correctAnswers,
+      completedTracks: updatedCompletedTracks,
     );
     unawaited(persistNow());
 
@@ -217,7 +249,13 @@ class StudyFlowController extends Notifier<StudyFlowState> {
   void resetTrack({required StudyFlowTrack track}) {
     final updatedIndices = Map<StudyFlowTrack, int>.from(state.trackIndices)
       ..[track] = 0;
-    state = state.copyWith(trackIndices: updatedIndices);
+    final updatedCompletedTracks = Set<StudyFlowTrack>.from(
+      state.completedTracks,
+    )..remove(track);
+    state = state.copyWith(
+      trackIndices: updatedIndices,
+      completedTracks: updatedCompletedTracks,
+    );
     unawaited(persistNow());
   }
 

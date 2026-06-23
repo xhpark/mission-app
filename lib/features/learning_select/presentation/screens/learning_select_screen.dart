@@ -19,6 +19,7 @@ import '../../../session_runtime/presentation/providers/session_runtime_provider
 import '../../domain/study_mode_route_resolver.dart';
 import '../controllers/learning_selection_controller.dart';
 import '../controllers/start_study_session_controller.dart';
+import '../widgets/asr_model_download_flow.dart';
 
 final _startActionChoiceProvider =
     NotifierProvider<_StartActionChoiceController, _StartActionChoice>(
@@ -194,7 +195,7 @@ class LearningSelectScreen extends ConsumerWidget {
                       ref.read(asrPolicyProvider.notifier).chooseServerFirst();
                     },
                     onOnDeviceOnlySelected: () {
-                      ref.read(asrPolicyProvider.notifier).chooseOnDeviceOnly();
+                      handleOnDeviceAsrSelection(context, ref);
                     },
                   ),
                 ),
@@ -300,7 +301,8 @@ class LearningSelectScreen extends ConsumerWidget {
   ) async {
     if (startActionChoice == _StartActionChoice.resume &&
         activeSession != null) {
-      context.go(routeForLearningMode(activeSession.mode));
+      final flow = ref.read(studyFlowControllerProvider);
+      context.go(resumeRouteForSession(activeSession.mode, flow));
       return;
     }
 

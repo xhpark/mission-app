@@ -5,6 +5,7 @@ import 'package:mission_app/l10n/app_localizations.dart';
 
 import '../../../../core/widgets/app_bottom_action_bar.dart';
 import '../../../../core/widgets/app_section_card.dart';
+import '../../../session_runtime/presentation/controllers/study_flow_controller.dart';
 import '../../../sentence_learning/presentation/controllers/current_study_session_controller.dart';
 import '../../domain/study_mode_route_resolver.dart';
 import '../controllers/learning_selection_controller.dart';
@@ -17,8 +18,9 @@ class LearningGuideScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final session = ref.watch(currentStudySessionProvider);
     final selection = ref.watch(learningSelectionProvider);
+    final flow = ref.watch(studyFlowControllerProvider);
     final startRoute = session != null
-        ? routeForLearningMode(session.mode)
+        ? resumeRouteForSession(session.mode, flow)
         : routeForSelectionOrFallback(selection);
 
     final principles = <String>[

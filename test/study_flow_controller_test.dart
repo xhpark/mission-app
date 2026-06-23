@@ -60,4 +60,90 @@ void main() {
     expect(restored.completedItems, 1);
     expect(restored.indexOf(StudyFlowTrack.flashSentenceLearning), 1);
   });
+
+  test('a track is marked completed once its last item is advanced past', () {
+    SharedPreferences.setMockInitialValues({});
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final controller = container.read(studyFlowControllerProvider.notifier);
+    controller.startSession(sessionId: 's1', totalItems: 2);
+
+    final hasNextOnFirstItem = controller.advanceTrack(
+      track: StudyFlowTrack.flashSentenceTestChoice,
+      totalCount: 2,
+    );
+    expect(hasNextOnFirstItem, isTrue);
+    expect(
+      container
+          .read(studyFlowControllerProvider)
+          .isTrackCompleted(StudyFlowTrack.flashSentenceTestChoice),
+      isFalse,
+    );
+
+    final hasNextOnLastItem = controller.advanceTrack(
+      track: StudyFlowTrack.flashSentenceTestChoice,
+      totalCount: 2,
+    );
+    expect(hasNextOnLastItem, isFalse);
+    expect(
+      container
+          .read(studyFlowControllerProvider)
+          .isTrackCompleted(StudyFlowTrack.flashSentenceTestChoice),
+      isTrue,
+    );
+  });
+
+  test('resetting a track clears its completed flag', () {
+    SharedPreferences.setMockInitialValues({});
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final controller = container.read(studyFlowControllerProvider.notifier);
+    controller.startSession(sessionId: 's1', totalItems: 1);
+    controller.advanceTrack(
+      track: StudyFlowTrack.flashSentenceTestChoice,
+      totalCount: 1,
+    );
+    expect(
+      container
+          .read(studyFlowControllerProvider)
+          .isTrackCompleted(StudyFlowTrack.flashSentenceTestChoice),
+      isTrue,
+    );
+
+    controller.resetTrack(track: StudyFlowTrack.flashSentenceTestChoice);
+    expect(
+      container
+          .read(studyFlowControllerProvider)
+          .isTrackCompleted(StudyFlowTrack.flashSentenceTestChoice),
+      isFalse,
+    );
+  });
+
+  test('completed tracks survive persistence and rehydration', () async {
+    SharedPreferences.setMockInitialValues({});
+    final container = ProviderContainer();
+
+    final controller = container.read(studyFlowControllerProvider.notifier);
+    controller.startSession(sessionId: 's1', totalItems: 1);
+    controller.advanceTrack(
+      track: StudyFlowTrack.flashSentenceTestChoice,
+      totalCount: 1,
+    );
+    await controller.persistNow();
+    container.dispose();
+
+    final restoredContainer = ProviderContainer();
+    addTearDown(restoredContainer.dispose);
+    restoredContainer.read(studyFlowControllerProvider);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    final restored = restoredContainer.read(studyFlowControllerProvider);
+    expect(
+      restored.isTrackCompleted(StudyFlowTrack.flashSentenceTestChoice),
+      isTrue,
+    );
+  });
 }

@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_bottom_action_bar.dart';
 import '../../../../core/widgets/app_section_card.dart';
 import '../../../learning_select/domain/study_mode_route_resolver.dart';
 import '../../../learning_select/presentation/controllers/learning_selection_controller.dart';
+import '../../../session_runtime/presentation/controllers/study_flow_controller.dart';
 import '../../../session_runtime/presentation/providers/session_runtime_providers.dart';
 import '../../../sentence_learning/presentation/controllers/current_study_session_controller.dart';
 
@@ -21,8 +22,9 @@ class ResumeScreen extends ConsumerWidget {
     final user = ref.watch(authStateChangesProvider).asData?.value;
     final developmentSession = ref.watch(developmentSessionProvider);
     final selection = ref.watch(learningSelectionProvider);
+    final flow = ref.watch(studyFlowControllerProvider);
     final resumeRoute = session != null
-        ? routeForLearningMode(session.mode)
+        ? resumeRouteForSession(session.mode, flow)
         : routeForSelectionOrFallback(selection);
     final sessionText = session == null
         ? 'No active session.\nChoose mode and start learning.'
