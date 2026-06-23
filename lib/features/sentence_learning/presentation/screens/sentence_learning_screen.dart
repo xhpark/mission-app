@@ -418,18 +418,10 @@ class _SentenceItemCardState extends State<_SentenceItemCard>
                   runSpacing: 8,
                   children: relatedWords
                       .map(
-                        (word) => ActionChip(
-                          label: SizedBox(
-                            width: labelMaxWidth < 180 ? 180 : labelMaxWidth,
-                            child: Text(
-                              _relatedWordLabel(word),
-                              softWrap: true,
-                              style: LearningTextEmphasis.optionPronunciation(
-                                context,
-                              )?.copyWith(fontSize: 22),
-                            ),
-                          ),
-                          onPressed: () => _audioPlayerService.playAsset(
+                        (word) => _KeyWordChip(
+                          label: _relatedWordLabel(word),
+                          maxWidth: labelMaxWidth < 180 ? 180 : labelMaxWidth,
+                          onTap: () => _audioPlayerService.playAsset(
                             _normalizeAssetPath(word.audioPath),
                           ),
                         ),
@@ -771,6 +763,64 @@ class _PlaceholderCard extends StatelessWidget {
   }
 }
 
+/// A chip-like label for a key word, built from scratch instead of
+/// [ActionChip]. Material's [Chip] forces its label into a
+/// `DefaultTextStyle(maxLines: 1, softWrap: false)`, which clips long
+/// Korean/Thai word explanations to a single line no matter what the inner
+/// [Text] requests. This widget has no such constraint, so the chip grows to
+/// fit however many lines the label needs.
+class _KeyWordChip extends StatelessWidget {
+  const _KeyWordChip({
+    required this.label,
+    required this.maxWidth,
+    required this.onTap,
+  });
+
+  final String label;
+  final double maxWidth;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: Material(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.volume_up_outlined,
+                  size: 18,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    label,
+                    softWrap: true,
+                    style: LearningTextEmphasis.optionPronunciation(
+                      context,
+                    )?.copyWith(fontSize: 22),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _MetaTag extends StatelessWidget {
   const _MetaTag({required this.label});
 
@@ -845,11 +895,14 @@ List<ThaiWordContent> _relatedWordsForSentence({
           return a.orderNo.compareTo(b.orderNo);
         });
 
-  final majorWords = matchedWords
-      .where((word) => word.wordType.toLowerCase() != 'particle')
-      .toList();
-  final wordsForUi = majorWords.isNotEmpty ? majorWords : matchedWords;
-  return _dedupeRelatedWords(wordsForUi).take(8).toList();
+  // Previously, any particle-typed word (e.g. honorific helpers) was dropped
+  // outright whenever another non-particle word also matched the same
+  // sentence. That made some linked word entries (like "ทรง") permanently
+  // unreachable in the UI even though they were correctly tagged to a
+  // sentence. Keep every matched word, already sorted by where it appears in
+  // the sentence, so learners can see every linked word that's actually
+  // present in the text.
+  return _dedupeRelatedWords(matchedWords).take(8).toList();
 }
 
 List<ThaiWordContent> _dedupeRelatedWords(List<ThaiWordContent> words) {
