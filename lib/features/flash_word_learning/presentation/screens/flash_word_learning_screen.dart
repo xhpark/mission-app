@@ -294,6 +294,11 @@ class _FlashWordLearningScreenState
       _remainingSeconds = seconds;
       _timerPaused = false;
     });
+    _runTimer();
+  }
+
+  void _runTimer() {
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (!mounted || _timerPaused) {
         return;
@@ -312,7 +317,14 @@ class _FlashWordLearningScreenState
     if (_remainingSeconds <= 0) {
       return;
     }
+    final resuming = _timerPaused;
     setState(() => _timerPaused = !_timerPaused);
+    // A lifecycle pause (app backgrounded) cancels the Timer outright, not
+    // just the _timerPaused flag, so resuming from that state needs a fresh
+    // Timer — toggling the flag alone leaves the countdown permanently stuck.
+    if (resuming && (_timer == null || !_timer!.isActive)) {
+      _runTimer();
+    }
   }
 
   Future<void> _playPromptAudio(String audioPath) async {
