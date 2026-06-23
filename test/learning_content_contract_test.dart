@@ -16,8 +16,8 @@ void main() {
       expect(dailySentences.length + missionSentences.length, 28);
 
       expect(dailyWords.length, 35);
-      expect(missionWords.length, 16);
-      expect(dailyWords.length + missionWords.length, 51);
+      expect(missionWords.length, 19);
+      expect(dailyWords.length + missionWords.length, 54);
     });
 
     test('sentence IDs are unique and order is contiguous by category', () {

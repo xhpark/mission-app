@@ -4,7 +4,7 @@
 /* eslint-disable */
 export const thaiContentManifest = {
   "version": 1,
-  "sourceHash": "fnv1a32:bda7f601",
+  "sourceHash": "fnv1a32:f1a8501f",
   "sourcePath": "lib/features/learning_content/data/thai_learning_content.dart",
   "contentSets": {
     "daily-beginner-default": {
@@ -693,8 +693,8 @@ export const thaiContentManifest = {
         "sentence_test": 10,
         "flash_sentence_learning": 10,
         "flash_sentence_test": 10,
-        "flash_word_learning": 16,
-        "flash_word_test": 16
+        "flash_word_learning": 19,
+        "flash_word_test": 19
       },
       "items": {
         "THS_M001": {
@@ -800,6 +800,18 @@ export const thaiContentManifest = {
         "THW_M016": {
           "type": "word",
           "expectedText": "เพลง"
+        },
+        "THW_M017": {
+          "type": "word",
+          "expectedText": "คุณ"
+        },
+        "THW_M018": {
+          "type": "word",
+          "expectedText": "ผม"
+        },
+        "THW_M019": {
+          "type": "word",
+          "expectedText": "กัน"
         }
       }
     },
@@ -811,8 +823,8 @@ export const thaiContentManifest = {
         "sentence_test": 10,
         "flash_sentence_learning": 10,
         "flash_sentence_test": 10,
-        "flash_word_learning": 16,
-        "flash_word_test": 16
+        "flash_word_learning": 19,
+        "flash_word_test": 19
       },
       "items": {
         "THS_M001": {
@@ -918,6 +930,18 @@ export const thaiContentManifest = {
         "THW_M016": {
           "type": "word",
           "expectedText": "เพลง"
+        },
+        "THW_M017": {
+          "type": "word",
+          "expectedText": "คุณ"
+        },
+        "THW_M018": {
+          "type": "word",
+          "expectedText": "ผม"
+        },
+        "THW_M019": {
+          "type": "word",
+          "expectedText": "กัน"
         }
       }
     },
@@ -929,8 +953,8 @@ export const thaiContentManifest = {
         "sentence_test": 10,
         "flash_sentence_learning": 10,
         "flash_sentence_test": 10,
-        "flash_word_learning": 16,
-        "flash_word_test": 16
+        "flash_word_learning": 19,
+        "flash_word_test": 19
       },
       "items": {
         "THS_M001": {
@@ -1036,6 +1060,18 @@ export const thaiContentManifest = {
         "THW_M016": {
           "type": "word",
           "expectedText": "เพลง"
+        },
+        "THW_M017": {
+          "type": "word",
+          "expectedText": "คุณ"
+        },
+        "THW_M018": {
+          "type": "word",
+          "expectedText": "ผม"
+        },
+        "THW_M019": {
+          "type": "word",
+          "expectedText": "กัน"
         }
       }
     }
