@@ -188,6 +188,12 @@ interface SessionReportStats {
   speakingPassRate: number | null;
   averageSimilarity: number | null;
   sttFailureCount: number;
+  // Number of distinct content items (sentences/words) attempted, not the
+  // number of recorded attempt documents. Modes like sentence_test record two
+  // attempt documents per item (one "choice", one "*_speaking"), so
+  // choiceAttemptCount + speakingAttemptCount double-counts completion
+  // against totalItems (which is sized per item, not per stage).
+  completedItemCount: number;
 }
 
 function requireAuthenticatedUser(authUid: string | undefined, userId: string): void {
@@ -464,10 +470,15 @@ async function collectSessionReportStats(
   let speakingPassedCount = 0;
   let sttFailureCount = 0;
   const similarityScores: number[] = [];
+  const completedItemIds = new Set<string>();
 
   for (const doc of itemsSnap.docs) {
     const data = doc.data() as Record<string, unknown>;
     const mode = data.mode;
+    const itemId = typeof data.itemId === "string" ? data.itemId : "";
+    if (itemId.length > 0) {
+      completedItemIds.add(itemId);
+    }
     if (mode === "choice") {
       choiceAttemptCount += 1;
       const score = Number(data.score ?? 0);
@@ -503,6 +514,7 @@ async function collectSessionReportStats(
     speakingAttemptCount,
     speakingPassedCount,
     speakingPassRate: calculatePercent(speakingPassedCount, speakingAttemptCount),
+    completedItemCount: completedItemIds.size,
     averageSimilarity: similarityScores.length > 0 ?
       Math.round(similarityTotal / similarityScores.length) :
       null,
@@ -1624,11 +1636,20 @@ export const completeReportSubmission = onCall<CompleteReportSubmissionData>(cal
     ""
   ).toString().trim();
 
-  const totalItems = optionalNonNegativeInteger(sessionData.totalItems, "session.totalItems") ?? 0;
+  const sessionTotalItems = optionalNonNegativeInteger(sessionData.totalItems, "session.totalItems") ?? 0;
   const contentSetId = (sessionData.contentSetId ?? "").toString();
   const category = (sessionData.category ?? "").toString();
   const level = (sessionData.level ?? "").toString();
   const mode = (sessionData.mode ?? "").toString();
+  // The session's totalItems is fixed at startStudySession time. If the
+  // content catalog grows while a session is in progress (or resumed later),
+  // a learner who legitimately completes every current item would otherwise
+  // be rejected for exceeding a now-stale count. Accept the larger of the
+  // two — the session's recorded total, or the live manifest total — so
+  // genuine catalog growth never blocks submission, while a fabricated count
+  // still gets rejected against the real manifest size.
+  const manifestTotalItems = getManifestModeTotal(contentSetId, mode);
+  const totalItems = Math.max(sessionTotalItems, manifestTotalItems ?? 0);
   // Assessment applicability and graded counts are server-authoritative.
   const assessmentApplicable = modeGroup(mode) === "test";
   const serverAttemptedAnswers = stats.choiceAttemptCount + stats.speakingAttemptCount;
@@ -1636,8 +1657,12 @@ export const completeReportSubmission = onCall<CompleteReportSubmissionData>(cal
 
   // Test modes report completion from server-recorded attempts; learning modes
   // have no gradable attempts, so the self-reported completion count is accepted.
+  // Completion is measured per distinct content item, not per recorded attempt
+  // document — modes like sentence_test record two attempt docs per item (one
+  // "choice", one "*_speaking" stage), so summing choice+speaking attempt
+  // counts double-counts completion against totalItems (sized per item).
   const completedItemsRaw = assessmentApplicable ?
-    (serverAttemptedAnswers > 0 ? serverAttemptedAnswers : (completedItemsFromClient ?? 0)) :
+    (stats.completedItemCount > 0 ? stats.completedItemCount : (completedItemsFromClient ?? 0)) :
     (completedItemsFromClient ?? totalItems);
   if (totalItems > 0 && completedItemsRaw > totalItems) {
     throw new HttpsError("invalid-argument", "COMPLETED_ITEMS_EXCEEDS_TOTAL_ITEMS");
