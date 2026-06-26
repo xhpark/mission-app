@@ -28,6 +28,14 @@ service firebase.storage {
       allow write: if false;
     }
 
+    // App install package for distributing to learners before they have an
+    // account (no auth yet at install time). Uploaded by operators via
+    // scripts/upload_app_release.py, never written by clients.
+    match /app_releases/{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }
