@@ -64,5 +64,10 @@ service cloud.firestore {
         allow write: if false;
       }
     }
+
+    match /learner_roster/{rosterId} {
+      allow read: if false;
+      allow write: if false;
+    }
   }
 }

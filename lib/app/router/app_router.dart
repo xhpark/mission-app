@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/firebase/firebase_providers.dart';
 import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
+import '../../features/admin/presentation/screens/learner_roster_screen.dart';
 import '../../features/admin/presentation/screens/today_link_clicks_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/bootstrap/presentation/controllers/bootstrap_controller.dart';
@@ -114,6 +115,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin-today-link-clicks',
         builder: (_, _) => const TodayLinkClicksScreen(),
+      ),
+      GoRoute(
+        path: '/admin-learner-roster',
+        builder: (_, _) => const LearnerRosterScreen(),
       ),
       GoRoute(
         path: '/my-history',

@@ -131,6 +131,12 @@ class LearningSelectScreen extends ConsumerWidget {
                       icon: const Icon(Icons.touch_app_outlined),
                       label: const Text('오늘의 학습/복습 링크'),
                     ),
+                    OutlinedButton.icon(
+                      onPressed: () =>
+                          context.push('/admin-learner-roster'),
+                      icon: const Icon(Icons.group_outlined),
+                      label: const Text('학습자 명단 관리'),
+                    ),
                   ],
                 ),
               ),

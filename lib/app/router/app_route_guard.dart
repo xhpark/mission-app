@@ -42,6 +42,7 @@ class AppRouteGuard {
     '/resume',
     '/admin-dashboard',
     '/admin-today-link-clicks',
+    '/admin-learner-roster',
   };
 
   static const routesRequiringActiveSession = <String>{

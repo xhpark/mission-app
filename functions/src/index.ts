@@ -134,6 +134,20 @@ interface GetTodayLinkClicksData {
   dateKey?: string;
 }
 
+interface AddLearnerRosterEntriesData {
+  adminUserId: string;
+  entries: {name: string; phone: string}[];
+}
+
+interface GetLearnerRosterData {
+  adminUserId: string;
+}
+
+interface DeleteLearnerRosterEntryData {
+  adminUserId: string;
+  rosterId: string;
+}
+
 interface ApproveUserData {
   adminUserId: string;
   targetUserId: string;
@@ -2696,5 +2710,115 @@ export const getTodayLinkClicks = onCall<GetTodayLinkClicksData>(
       totalLearners: learners.length,
       learners,
     };
+  },
+);
+
+export const addLearnerRosterEntries = onCall<AddLearnerRosterEntriesData>(
+  callableOptions,
+  async (request) => {
+    const adminUserId = ensureString(request.data?.adminUserId, "adminUserId");
+    await requireAdminUser(request.auth?.uid, request.auth?.token, adminUserId);
+
+    const rawEntries = Array.isArray(request.data?.entries) ? request.data.entries : [];
+    if (rawEntries.length === 0) {
+      throw new HttpsError("invalid-argument", "ENTRIES_REQUIRED");
+    }
+
+    const rosterCollection = db.collection("learner_roster");
+    let added = 0;
+    let updated = 0;
+
+    for (const rawEntry of rawEntries) {
+      const name = ensureString((rawEntry as {name?: unknown}).name, "name");
+      const phoneNormalized = normalizePhone((rawEntry as {phone?: unknown}).phone);
+      if (phoneNormalized.length < 8) {
+        continue;
+      }
+      const phone = ensureString((rawEntry as {phone?: unknown}).phone, "phone");
+
+      const existing = await rosterCollection
+        .where("phoneNormalized", "==", phoneNormalized)
+        .limit(1)
+        .get();
+
+      if (existing.empty) {
+        await rosterCollection.add({
+          name,
+          phone,
+          phoneNormalized,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdBy: adminUserId,
+        });
+        added++;
+      } else {
+        await existing.docs[0].ref.set(
+          {name, phone, phoneNormalized},
+          {merge: true},
+        );
+        updated++;
+      }
+    }
+
+    return {added, updated};
+  },
+);
+
+export const getLearnerRoster = onCall<GetLearnerRosterData>(
+  callableOptions,
+  async (request) => {
+    const adminUserId = ensureString(request.data?.adminUserId, "adminUserId");
+    await requireAdminUser(request.auth?.uid, request.auth?.token, adminUserId);
+
+    const [rosterSnap, profilesSnap] = await Promise.all([
+      db.collection("learner_roster").get(),
+      db.collection("user_profiles").get(),
+    ]);
+
+    const profilesByPhone = new Map<string, FirebaseFirestore.DocumentData>();
+    for (const doc of profilesSnap.docs) {
+      const data = doc.data();
+      const phoneNormalized = normalizePhone(
+        data.phoneNormalized ?? data.phone ?? data.phoneNumber,
+      );
+      if (phoneNormalized.length >= 8 && !profilesByPhone.has(phoneNormalized)) {
+        profilesByPhone.set(phoneNormalized, data);
+      }
+    }
+
+    const entries = rosterSnap.docs.map((doc) => {
+      const data = doc.data();
+      const phoneNormalized = (data.phoneNormalized ?? "").toString();
+      const matchedProfile = profilesByPhone.get(phoneNormalized);
+      const status = !matchedProfile
+        ? "not_registered"
+        : matchedProfile.status === "approved"
+          ? "approved"
+          : matchedProfile.status === "blocked"
+            ? "blocked"
+            : "pending_approval";
+      return {
+        rosterId: doc.id,
+        name: (data.name ?? "-").toString(),
+        phone: (data.phone ?? "-").toString(),
+        status,
+        matchedEmail: matchedProfile ? normalizeEmail(matchedProfile.email) : null,
+      };
+    });
+
+    entries.sort((a, b) => a.name.localeCompare(b.name, "ko"));
+
+    return {entries};
+  },
+);
+
+export const deleteLearnerRosterEntry = onCall<DeleteLearnerRosterEntryData>(
+  callableOptions,
+  async (request) => {
+    const adminUserId = ensureString(request.data?.adminUserId, "adminUserId");
+    await requireAdminUser(request.auth?.uid, request.auth?.token, adminUserId);
+    const rosterId = ensureString(request.data?.rosterId, "rosterId");
+
+    await db.doc(`learner_roster/${rosterId}`).delete();
+    return {deleted: true};
   },
 );
