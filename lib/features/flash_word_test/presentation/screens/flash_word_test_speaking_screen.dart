@@ -14,6 +14,8 @@ import '../../../../core/services/recorder_service.dart';
 import '../../../../core/widgets/app_section_card.dart';
 import '../../../../core/widgets/interactive_learning_screen.dart';
 import '../../../learning_content/data/thai_learning_content.dart';
+import '../../../learning_select/domain/learning_selection_labels.dart'
+    as labels;
 import '../../../sentence_learning/presentation/controllers/current_study_session_controller.dart';
 import '../../../session_runtime/domain/test_item_order.dart';
 import '../../../session_runtime/presentation/controllers/study_flow_controller.dart';
@@ -127,6 +129,13 @@ class _FlashWordTestSpeakingScreenState
       key: ValueKey(
         'flash-word-test-speaking-$displayIndex-$targetIndex-$_retryEpoch',
       ),
+      selectionSummaryLabels: session == null || l10n == null
+          ? null
+          : [
+              labels.categoryLabel(session.category, l10n),
+              labels.levelLabel(session.level, l10n),
+              labels.modeLabel(session.mode, l10n),
+            ],
       title: '플래시 단어 테스트 - 말하기',
       subtitle: '제시된 한국어 뜻에 맞는 태국어 발음을 말해 보세요.',
       progress: (displayIndex + 1) / effectiveTotal,

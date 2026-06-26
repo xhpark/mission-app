@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 import 'app_text_styles.dart';
@@ -32,11 +33,26 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.neutralBackground,
-      textTheme: const TextTheme(
+      textTheme: TextTheme(
+        headlineLarge: AppTextStyles.heading,
         headlineMedium: AppTextStyles.heading,
+        headlineSmall: AppTextStyles.title,
         titleLarge: AppTextStyles.title,
         bodyLarge: AppTextStyles.body,
         bodyMedium: AppTextStyles.bodySmall,
+        bodySmall: AppTextStyles.bodySmall.copyWith(fontSize: 14),
+        labelLarge: GoogleFonts.notoSerifKr(
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+        ),
+        labelMedium: GoogleFonts.notoSerifKr(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
+        labelSmall: GoogleFonts.notoSerifKr(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       appBarTheme: AppBarTheme(
         centerTitle: false,
@@ -44,11 +60,7 @@ class AppTheme {
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.neutralBackground,
         foregroundColor: AppColors.textStrong,
-        titleTextStyle: AppTextStyles.title.copyWith(
-          color: AppColors.textStrong,
-          fontSize: 25,
-          fontWeight: FontWeight.w800,
-        ),
+        titleTextStyle: AppTextStyles.title.copyWith(fontSize: 25),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,

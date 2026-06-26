@@ -15,6 +15,8 @@ import '../../../../core/services/recorder_service.dart';
 import '../../../../core/widgets/interactive_learning_screen.dart';
 import '../../../../core/widgets/learning_action_styles.dart';
 import '../../../learning_content/data/thai_learning_content.dart';
+import '../../../learning_select/domain/learning_selection_labels.dart'
+    as labels;
 import '../../../sentence_learning/presentation/controllers/current_study_session_controller.dart';
 import '../../../session_runtime/domain/test_item_order.dart';
 import '../../../session_runtime/presentation/controllers/study_flow_controller.dart';
@@ -114,6 +116,13 @@ class _FlashSentenceTestSpeakingScreenState
       key: ValueKey(
         'flash-sentence-test-speaking-$displayIndex-$targetIndex-$_retryEpoch',
       ),
+      selectionSummaryLabels: session == null || l10n == null
+          ? null
+          : [
+              labels.categoryLabel(session.category, l10n),
+              labels.levelLabel(session.level, l10n),
+              labels.modeLabel(session.mode, l10n),
+            ],
       title:
           l10n?.flashSentenceTestSpeakingTitle ??
           'Flash Sentence Test - Speaking',

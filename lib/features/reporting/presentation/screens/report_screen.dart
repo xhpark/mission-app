@@ -7,6 +7,7 @@ import '../../../../core/firebase/firebase_services.dart';
 import '../../../../core/widgets/app_bottom_action_bar.dart';
 import '../../../../core/widgets/app_section_card.dart';
 import '../../../../core/widgets/app_status_banner.dart';
+import '../../../learning_select/domain/study_mode_route_resolver.dart';
 import '../../../learning_select/presentation/controllers/learning_selection_controller.dart';
 import '../../domain/report_metrics.dart';
 import '../../../sentence_learning/presentation/controllers/current_study_session_controller.dart';
@@ -24,6 +25,7 @@ class ReportScreen extends ConsumerStatefulWidget {
 class _ReportScreenState extends ConsumerState<ReportScreen> {
   bool _submitted = false;
   bool _submitting = false;
+  String? _testSelectRouteAfterSubmit;
 
   Future<void> _submitReport() async {
     final user = ref.read(authStateChangesProvider).asData?.value;
@@ -64,10 +66,15 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         .read(sessionRuntimeRepositoryProvider)
         .discardResumeState(userId: user.uid, sessionId: session.sessionId);
 
+    final testSelectRoute = testSelectRouteForMode(session.mode);
+
     ref.read(reportRequirementProvider.notifier).markSubmitted();
     ref.read(currentStudySessionProvider.notifier).clear();
     ref.read(studyFlowControllerProvider.notifier).clear();
-    setState(() => _submitted = true);
+    setState(() {
+      _submitted = true;
+      _testSelectRouteAfterSubmit = testSelectRoute;
+    });
   }
 
   @override
@@ -203,9 +210,17 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         ],
       ),
       bottomNavigationBar: AppBottomActionBar(
-        secondaryLabel: '요약으로 돌아가기',
-        onSecondaryPressed: () => context.go('/session-summary'),
-        primaryLabel: _submitted ? '제출 완료' : '리포트 제출',
+        secondaryLabel: _submitted ? '학습 선택으로 이동' : '요약으로 돌아가기',
+        onSecondaryPressed: () => context.go(_submitted ? '/select' : '/session-summary'),
+        tertiaryLabel: _submitted && _testSelectRouteAfterSubmit != null
+            ? '다른 테스트 선택'
+            : null,
+        onTertiaryPressed: _submitted && _testSelectRouteAfterSubmit != null
+            ? () => context.go(_testSelectRouteAfterSubmit!)
+            : null,
+        primaryLabel: _submitted
+            ? '제출 완료'
+            : (_submitting ? '리포트 제출 중...' : '리포트 제출'),
         onPrimaryPressed: canSubmit
             ? () async {
                 setState(() => _submitting = true);

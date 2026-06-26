@@ -2,41 +2,145 @@ import 'dart:typed_data';
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mission_app/l10n/app_localizations.dart';
 
 import '../../../../core/errors/app_error_messages.dart';
 import '../../../../core/services/audio_player_service.dart';
+import '../../../../core/services/learning_preferences_controller.dart';
 import '../../../../core/services/recorder_service.dart';
 import '../../../../core/services/recording_storage_service.dart';
 import '../../../../core/widgets/app_section_card.dart';
 import '../../../../core/widgets/app_status_banner.dart';
 import '../../../../core/widgets/learning_action_styles.dart';
 import '../../../../core/widgets/learning_text_emphasis.dart';
+import '../../../../core/widgets/selection_summary_line.dart';
 import '../../../learning_content/data/thai_learning_content.dart';
+import '../../../learning_select/domain/learning_selection_labels.dart'
+    as labels;
 import '../../../learning_select/presentation/controllers/learning_selection_controller.dart';
 import '../../data/models/sentence_learning_item.dart';
+import '../auto_scroll_timing.dart';
 import '../controllers/current_study_session_controller.dart';
 import '../controllers/sentence_learning_controller.dart';
 
-class SentenceLearningScreen extends ConsumerWidget {
+class SentenceLearningScreen extends ConsumerStatefulWidget {
   const SentenceLearningScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SentenceLearningScreen> createState() =>
+      _SentenceLearningScreenState();
+}
+
+class _SentenceLearningScreenState
+    extends ConsumerState<SentenceLearningScreen> with WidgetsBindingObserver {
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _advanceButtonKey = GlobalKey();
+  Timer? _autoScrollTimer;
+  String _scheduledItemId = '';
+  bool _userEngagedThisItem = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _autoScrollTimer?.cancel();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 화면이 백그라운드로 가면 예약된 자동 스크롤을 취소한다(플래시 화면과 동일 정책).
+    switch (state) {
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.detached:
+        _autoScrollTimer?.cancel();
+        break;
+      case AppLifecycleState.resumed:
+        break;
+    }
+  }
+
+  /// 새 아이템이 들어오면 자동 스크롤을 (재)예약한다. itemId가 같으면 무시(중복 방지).
+  void _maybeScheduleAutoScroll(SentenceLearningItem? item) {
+    if (item == null) {
+      return;
+    }
+    if (item.itemId == _scheduledItemId) {
+      return;
+    }
+    _scheduledItemId = item.itemId;
+    _userEngagedThisItem = false;
+    _autoScrollTimer?.cancel();
+
+    if (!ref.read(learningPreferencesProvider).autoScrollEnabled) {
+      return;
+    }
+
+    final contentCharCount =
+        item.nativeText.length +
+        item.thaiText.length +
+        item.pronunciation.length +
+        item.hint.length;
+    final delay = computeAutoScrollDelay(contentCharCount: contentCharCount);
+
+    _autoScrollTimer = Timer(delay, () {
+      if (!mounted || _userEngagedThisItem) {
+        return;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _userEngagedThisItem) {
+          return;
+        }
+        final targetContext = _advanceButtonKey.currentContext;
+        if (targetContext == null) {
+          return;
+        }
+        // alignment: 1.0 -> 버튼을 화면 하단에 띄우며 위쪽 내용은 그대로 남긴다.
+        Scrollable.ensureVisible(
+          targetContext,
+          alignment: 1.0,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      });
+    });
+  }
+
+  /// 사용자가 직접 스크롤하거나 녹음을 시작하면 이번 아이템의 자동 스크롤을 무효화한다.
+  void _markUserEngaged() {
+    _userEngagedThisItem = true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = _resolveL10n(context);
     final session = ref.watch(currentStudySessionProvider);
     final sentenceItemState = ref.watch(sentenceLearningControllerProvider);
 
     ref.listen(sentenceLearningControllerProvider, (previous, next) {
       next.whenOrNull(
+        data: (item) => _maybeScheduleAutoScroll(item),
         error: (error, _) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(toUserFacingErrorMessage(error))),
           );
         },
       );
+    });
+    // 첫 빌드에서 데이터가 이미 준비된 경우 listen이 안 잡으므로 보조 예약.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeScheduleAutoScroll(sentenceItemState.asData?.value);
     });
 
     if (session == null) {
@@ -87,46 +191,58 @@ class SentenceLearningScreen extends ConsumerWidget {
           tooltip: l10n.interactiveBackTooltip,
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _MetaTag(label: _categoryLabel(session.category, l10n)),
-              _MetaTag(label: _levelLabel(session.level, l10n)),
-              _MetaTag(label: _modeLabel(session.mode, l10n)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          AppSectionCard(
-            title: l10n.sentenceLearningSectionTitle,
-            child: session.mode == LearningMode.sentenceLearning
-                ? sentenceItemState.when(
-                    data: (item) => item == null
-                        ? _PlaceholderCard(
-                            message: l10n.sentenceLearningPlaceholder,
-                          )
-                        : _SentenceItemCard(
-                            item: item,
-                            category: session.category.name,
-                            isLoading: sentenceItemState.isLoading,
-                            onComplete: () => ref
-                                .read(
-                                  sentenceLearningControllerProvider.notifier,
-                                )
-                                .completeCurrentItem(),
-                            onDone: () => context.go('/session-summary'),
-                          ),
-                    loading: () => const _LoadingCard(),
-                    error: (error, _) => _PlaceholderCard(
-                      message: l10n.sentenceLearningLoadError(error.toString()),
-                    ),
-                  )
-                : _PlaceholderCard(message: l10n.sentenceLearningPlaceholder),
-          ),
-        ],
+      body: NotificationListener<UserScrollNotification>(
+        onNotification: (notification) {
+          // 사용자가 직접 스크롤하면 이번 아이템 자동 스크롤을 취소한다.
+          if (notification.direction != ScrollDirection.idle) {
+            _markUserEngaged();
+          }
+          return false;
+        },
+        child: ListView(
+          controller: _scrollController,
+          padding: const EdgeInsets.all(24),
+          children: [
+            SelectionSummaryLine(
+              labels: [
+                labels.categoryLabel(session.category, l10n),
+                labels.levelLabel(session.level, l10n),
+                labels.modeLabel(session.mode, l10n),
+              ],
+            ),
+            const SizedBox(height: 12),
+            AppSectionCard(
+              title: l10n.sentenceLearningSectionTitle,
+              child: session.mode == LearningMode.sentenceLearning
+                  ? sentenceItemState.when(
+                      data: (item) => item == null
+                          ? _PlaceholderCard(
+                              message: l10n.sentenceLearningPlaceholder,
+                            )
+                          : _SentenceItemCard(
+                              item: item,
+                              category: session.category.name,
+                              isLoading: sentenceItemState.isLoading,
+                              advanceButtonKey: _advanceButtonKey,
+                              onUserEngaged: _markUserEngaged,
+                              onComplete: () => ref
+                                  .read(
+                                    sentenceLearningControllerProvider.notifier,
+                                  )
+                                  .completeCurrentItem(),
+                              onDone: () => context.go('/session-summary'),
+                            ),
+                      loading: () => const _LoadingCard(),
+                      error: (error, _) => _PlaceholderCard(
+                        message: l10n.sentenceLearningLoadError(
+                          error.toString(),
+                        ),
+                      ),
+                    )
+                  : _PlaceholderCard(message: l10n.sentenceLearningPlaceholder),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -137,6 +253,8 @@ class _SentenceItemCard extends StatefulWidget {
     required this.item,
     required this.category,
     required this.isLoading,
+    required this.advanceButtonKey,
+    required this.onUserEngaged,
     required this.onComplete,
     required this.onDone,
   });
@@ -144,6 +262,8 @@ class _SentenceItemCard extends StatefulWidget {
   final SentenceLearningItem item;
   final String category;
   final bool isLoading;
+  final GlobalKey advanceButtonKey;
+  final VoidCallback onUserEngaged;
   final VoidCallback onComplete;
   final VoidCallback onDone;
 
@@ -444,6 +564,7 @@ class _SentenceItemCardState extends State<_SentenceItemCard>
           const SizedBox(height: 16),
           if (widget.item.sessionCompleted)
             Column(
+              key: widget.advanceButtonKey,
               children: [
                 Container(
                   width: double.infinity,
@@ -469,6 +590,7 @@ class _SentenceItemCardState extends State<_SentenceItemCard>
             )
           else
             SizedBox(
+              key: widget.advanceButtonKey,
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: widget.isLoading ? null : widget.onComplete,
@@ -496,6 +618,7 @@ class _SentenceItemCardState extends State<_SentenceItemCard>
 
   Future<void> _onStartRecording() async {
     final l10n = _resolveL10n(context);
+    widget.onUserEngaged();
     setState(() => _recordingSubmitting = true);
     try {
       await _recorderService.start();
@@ -821,30 +944,6 @@ class _KeyWordChip extends StatelessWidget {
   }
 }
 
-class _MetaTag extends StatelessWidget {
-  const _MetaTag({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-          fontSize: 20,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-}
-
 String _normalizeAssetPath(String path) {
   var normalized = path.trim();
   if (normalized.startsWith('assets/')) {
@@ -991,25 +1090,3 @@ AppLocalizations _resolveL10n(BuildContext context) {
       lookupAppLocalizations(const Locale('ko'));
 }
 
-String _categoryLabel(LearningCategory category, AppLocalizations l10n) =>
-    switch (category) {
-      LearningCategory.daily => l10n.learningSelectCategoryDaily,
-      LearningCategory.mission => l10n.learningSelectCategoryMission,
-    };
-
-String _levelLabel(LearningLevel level, AppLocalizations l10n) =>
-    switch (level) {
-      LearningLevel.beginner => l10n.learningSelectLevelBeginner,
-      LearningLevel.intermediate => l10n.learningSelectLevelIntermediate,
-      LearningLevel.advanced => l10n.learningSelectLevelAdvanced,
-    };
-
-String _modeLabel(LearningMode mode, AppLocalizations l10n) => switch (mode) {
-  LearningMode.sentenceLearning => l10n.learningSelectModeSentenceLearning,
-  LearningMode.sentenceTest => l10n.learningSelectModeSentenceTest,
-  LearningMode.flashWordLearning => l10n.learningSelectModeFlashWordLearning,
-  LearningMode.flashWordTest => l10n.learningSelectModeFlashWordTest,
-  LearningMode.flashSentenceLearning =>
-    l10n.learningSelectModeFlashSentenceLearning,
-  LearningMode.flashSentenceTest => l10n.learningSelectModeFlashSentenceTest,
-};

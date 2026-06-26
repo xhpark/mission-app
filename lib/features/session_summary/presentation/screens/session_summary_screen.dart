@@ -7,6 +7,7 @@ import '../../../../core/widgets/app_bottom_action_bar.dart';
 import '../../../../core/widgets/app_section_card.dart';
 import '../../../../core/widgets/app_status_banner.dart';
 import '../../../../core/widgets/word_wrap_text.dart';
+import '../../../learning_select/domain/study_mode_route_resolver.dart';
 import '../../../learning_select/presentation/controllers/learning_selection_controller.dart';
 import '../../../reporting/presentation/controllers/report_requirement_controller.dart';
 import '../../../session_runtime/presentation/controllers/study_flow_controller.dart';
@@ -133,6 +134,19 @@ class SessionSummaryScreen extends ConsumerWidget {
       bottomNavigationBar: AppBottomActionBar(
         secondaryLabel: '처음부터 다시 학습',
         onSecondaryPressed: () => context.go('/select'),
+        tertiaryLabel: session == null
+            ? null
+            : testSelectRouteForMode(session.mode) == null
+            ? null
+            : '다른 테스트 선택',
+        onTertiaryPressed: session == null
+            ? null
+            : () {
+                final route = testSelectRouteForMode(session.mode);
+                if (route != null) {
+                  context.go(route);
+                }
+              },
         primaryLabel: l10n.reportPrimarySubmit,
         onPrimaryPressed: () {
           ref.read(reportRequirementProvider.notifier).requireReport();

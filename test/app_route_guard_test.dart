@@ -230,22 +230,25 @@ void main() {
     expect(target, isNull);
   });
 
-  test('redirects report route to select when there is no active session', () {
-    final target = AppRouteGuard.redirect(
-      const AppRouteGuardInput(
-        location: '/report',
-        isBootstrapping: false,
-        signedIn: true,
-        isDevelopmentAnonymous: false,
-        sessionHydrated: true,
-        hasCurrentSession: false,
-        reportRequired: false,
-        bootstrapSession: null,
-      ),
-    );
+  test(
+    'allows report route without an active session so the submitted state can be shown',
+    () {
+      final target = AppRouteGuard.redirect(
+        AppRouteGuardInput(
+          location: '/report',
+          isBootstrapping: false,
+          signedIn: true,
+          isDevelopmentAnonymous: false,
+          sessionHydrated: true,
+          hasCurrentSession: false,
+          reportRequired: false,
+          bootstrapSession: BootstrapSession.fallback(),
+        ),
+      );
 
-    expect(target, '/select');
-  });
+      expect(target, isNull);
+    },
+  );
 
   test('allows report route when there is an active session', () {
     final target = AppRouteGuard.redirect(

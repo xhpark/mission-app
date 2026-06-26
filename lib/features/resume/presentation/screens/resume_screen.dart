@@ -27,11 +27,11 @@ class ResumeScreen extends ConsumerWidget {
         ? resumeRouteForSession(session.mode, flow)
         : routeForSelectionOrFallback(selection);
     final sessionText = session == null
-        ? 'No active session.\nChoose mode and start learning.'
-        : 'Recent Session: '
+        ? '진행 중인 세션이 없습니다.\n학습 모드를 선택하고 학습을 시작해 주세요.'
+        : '최근 세션: '
             '${_categoryLabel(session.category, l10n)} ${_modeLabel(session.mode, l10n)}\n'
-            'Content Set: ${session.contentSetId}\n'
-            'Started At: ${session.startedAt}';
+            '콘텐츠 세트: ${session.contentSetId}\n'
+            '시작 시각: ${session.startedAt}';
 
     return Scaffold(
       appBar: AppBar(

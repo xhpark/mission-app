@@ -9,6 +9,7 @@ class AppSectionCard extends StatelessWidget {
     this.icon,
     this.padding = const EdgeInsets.all(20),
     this.titleStyle,
+    this.backgroundColor,
   });
 
   final String title;
@@ -17,11 +18,13 @@ class AppSectionCard extends StatelessWidget {
   final IconData? icon;
   final EdgeInsetsGeometry padding;
   final TextStyle? titleStyle;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
+      color: backgroundColor,
       child: Padding(
         padding: padding,
         child: Column(
@@ -32,12 +35,7 @@ class AppSectionCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style:
-                        titleStyle ??
-                        theme.textTheme.titleLarge?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.w800,
-                        ),
+                    style: titleStyle ?? theme.textTheme.titleLarge,
                   ),
                 ),
                 if (icon != null)

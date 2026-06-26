@@ -41,6 +41,7 @@ class AppRouteGuard {
     '/report-preview',
     '/resume',
     '/admin-dashboard',
+    '/admin-today-link-clicks',
   };
 
   static const routesRequiringActiveSession = <String>{
@@ -56,7 +57,6 @@ class AppRouteGuard {
     '/flash-sentence-test/choice',
     '/flash-sentence-test/speaking',
     '/session-summary',
-    '/report',
     '/report-preview',
   };
 

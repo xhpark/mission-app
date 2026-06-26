@@ -15,6 +15,14 @@ class AppColors {
   static const textStrong = Color(0xFF102033);
   static const textMuted = Color(0xFF4B5F70);
 
+  /// Deep bronze-gold used for widget/section titles, in place of plain
+  /// black or navy text, for a more refined look.
+  static const titleAccent = Color(0xFF8B5E22);
+
+  /// Warm highlight background for the daily "오늘의 학습과 복습" card, to set
+  /// it apart from the regular white section cards.
+  static const dailyHighlight = Color(0xFFFCEFD7);
+
   static const success = Color(0xFF217A4A);
   static const warning = Color(0xFF9A5A00);
   static const error = Color(0xFFB3261E);

@@ -1,11 +1,14 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/errors/app_error_messages.dart';
 import '../../../../core/firebase/firebase_providers.dart';
 import '../../../../core/firebase/firebase_services.dart';
 import '../../../../core/widgets/app_section_card.dart';
 import '../../../../core/widgets/app_status_banner.dart';
+import '../../../learning_select/data/today_link_repository.dart';
 
 enum _DashboardDetail {
   today,
@@ -161,6 +164,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   ),
                   const SizedBox(height: 16),
                 ],
+                const _TodayLinkAdminSection(),
+                const SizedBox(height: 16),
+                const _Thai25DayBulkSeedSection(),
+                const SizedBox(height: 16),
                 _SummarySection(
                   data: data,
                   selectedDetail: _selectedDetail,
@@ -190,6 +197,294 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _TodayLinkAdminSection extends ConsumerStatefulWidget {
+  const _TodayLinkAdminSection();
+
+  @override
+  ConsumerState<_TodayLinkAdminSection> createState() =>
+      _TodayLinkAdminSectionState();
+}
+
+class _TodayLinkAdminSectionState
+    extends ConsumerState<_TodayLinkAdminSection> {
+  final _titleController = TextEditingController();
+  final _urlController = TextEditingController();
+  bool _loading = true;
+  bool _saving = false;
+  String? _message;
+  bool _messageIsError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExisting();
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _urlController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadExisting() async {
+    try {
+      final link = await ref.read(todayLinkRepositoryProvider).getTodayLink();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _titleController.text = link.title ?? '';
+        _urlController.text = link.url ?? '';
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _save() async {
+    final user = ref.read(authStateChangesProvider).asData?.value;
+    if (user == null) {
+      return;
+    }
+
+    setState(() {
+      _saving = true;
+      _message = null;
+    });
+    try {
+      await ref.read(todayLinkRepositoryProvider).setTodayLink(
+        adminUserId: user.uid,
+        url: _urlController.text.trim(),
+        title: _titleController.text.trim(),
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _message = '오늘의 링크를 저장했습니다.';
+        _messageIsError = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _message = _todayLinkErrorMessage(error);
+        _messageIsError = true;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
+  }
+
+  String _todayLinkErrorMessage(Object error) {
+    if (error is FirebaseFunctionsException && error.code == 'invalid-argument') {
+      return '제목과 URL을 올바르게 입력했는지 확인해 주세요. URL은 http:// 또는 https://로 시작해야 합니다.';
+    }
+    return toUserFacingErrorMessage(error);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSectionCard(
+      title: '오늘의 링크 관리',
+      description: '학습자가 "오늘의 학습과 복습"을 누르면 열리는 외부 페이지 링크를 등록합니다.',
+      icon: Icons.link,
+      child: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: _titleController,
+                  decoration: const InputDecoration(labelText: '제목'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _urlController,
+                  decoration: const InputDecoration(
+                    labelText: 'URL',
+                    hintText: 'https://...',
+                  ),
+                  keyboardType: TextInputType.url,
+                ),
+                const SizedBox(height: 12),
+                if (_message != null) ...[
+                  AppStatusBanner(
+                    isError: _messageIsError,
+                    icon: _messageIsError
+                        ? Icons.error_outline
+                        : Icons.check_circle_outline,
+                    message: _message!,
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton(
+                    onPressed: _saving ? null : _save,
+                    child: Text(_saving ? '저장 중...' : '오늘의 링크 저장'),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+/// One-time bulk seed for the "태국어 25일 일별 학습계획" curriculum: weekday-only
+/// dates (Sat/Sun skipped, per the plan's Mon-Fri schedule) starting
+/// 2026-06-29, each pointing at https://xhpark.github.io/Thai_25day/?day=N.
+/// Reuses the same `setTodayLink` callable as the manual single-day form
+/// above — no new backend/schema. Safe to leave in place; re-running just
+/// overwrites the same 25 dates with the same data (merge:true).
+const _thai25DayPlan = <({String dateKey, String title, String url})>[
+  (dateKey: '2026-06-29', title: '1일차 첫 인사 시작하기', url: 'https://xhpark.github.io/Thai_25day/?day=1'),
+  (dateKey: '2026-06-30', title: '2일차 시간대 인사 익히기', url: 'https://xhpark.github.io/Thai_25day/?day=2'),
+  (dateKey: '2026-07-01', title: '3일차 감사와 응답', url: 'https://xhpark.github.io/Thai_25day/?day=3'),
+  (dateKey: '2026-07-02', title: '4일차 짧게 대답하기', url: 'https://xhpark.github.io/Thai_25day/?day=4'),
+  (dateKey: '2026-07-03', title: '5일차 예수님 믿으세요', url: 'https://xhpark.github.io/Thai_25day/?day=5'),
+  (dateKey: '2026-07-06', title: '6일차 정중하게 말 걸기', url: 'https://xhpark.github.io/Thai_25day/?day=6'),
+  (dateKey: '2026-07-07', title: '7일차 이름 묻기', url: 'https://xhpark.github.io/Thai_25day/?day=7'),
+  (dateKey: '2026-07-08', title: '8일차 자기소개하기', url: 'https://xhpark.github.io/Thai_25day/?day=8'),
+  (dateKey: '2026-07-09', title: '9일차 나이 묻기', url: 'https://xhpark.github.io/Thai_25day/?day=9'),
+  (dateKey: '2026-07-10', title: '10일차 우리는 당신들을 사랑해요', url: 'https://xhpark.github.io/Thai_25day/?day=10'),
+  (dateKey: '2026-07-13', title: '11일차 화장실 묻기', url: 'https://xhpark.github.io/Thai_25day/?day=11'),
+  (dateKey: '2026-07-14', title: '12일차 식사 대화', url: 'https://xhpark.github.io/Thai_25day/?day=12'),
+  (dateKey: '2026-07-15', title: '13일차 격려하기', url: 'https://xhpark.github.io/Thai_25day/?day=13'),
+  (dateKey: '2026-07-16', title: '14일차 작별 인사', url: 'https://xhpark.github.io/Thai_25day/?day=14'),
+  (dateKey: '2026-07-17', title: '15일차 기도해 드릴게요', url: 'https://xhpark.github.io/Thai_25day/?day=15'),
+  (dateKey: '2026-07-20', title: '16일차 예수님의 사랑 전하기', url: 'https://xhpark.github.io/Thai_25day/?day=16'),
+  (dateKey: '2026-07-21', title: '17일차 하나님의 사랑 전하기', url: 'https://xhpark.github.io/Thai_25day/?day=17'),
+  (dateKey: '2026-07-22', title: '18일차 축복하기', url: 'https://xhpark.github.io/Thai_25day/?day=18'),
+  (dateKey: '2026-07-23', title: '19일차 하나님은 사랑이십니다', url: 'https://xhpark.github.io/Thai_25day/?day=19'),
+  (dateKey: '2026-07-24', title: '20일차 함께 찬양해요', url: 'https://xhpark.github.io/Thai_25day/?day=20'),
+  (dateKey: '2026-07-27', title: '21일차 인사와 감사 전체 복습', url: 'https://xhpark.github.io/Thai_25day/?day=21'),
+  (dateKey: '2026-07-28', title: '22일차 새 친구와 자기소개 복습', url: 'https://xhpark.github.io/Thai_25day/?day=22'),
+  (dateKey: '2026-07-29', title: '23일차 생활 대화와 돌봄 복습', url: 'https://xhpark.github.io/Thai_25day/?day=23'),
+  (dateKey: '2026-07-30', title: '24일차 사랑·축복·믿음·찬양 복습', url: 'https://xhpark.github.io/Thai_25day/?day=24'),
+  (dateKey: '2026-07-31', title: '25일차 전체 24문장 종합 리허설', url: 'https://xhpark.github.io/Thai_25day/?day=25'),
+];
+
+class _Thai25DayBulkSeedSection extends ConsumerStatefulWidget {
+  const _Thai25DayBulkSeedSection();
+
+  @override
+  ConsumerState<_Thai25DayBulkSeedSection> createState() =>
+      _Thai25DayBulkSeedSectionState();
+}
+
+class _Thai25DayBulkSeedSectionState
+    extends ConsumerState<_Thai25DayBulkSeedSection> {
+  bool _running = false;
+  String? _resultMessage;
+  bool _resultIsError = false;
+
+  Future<void> _runBulkSeed() async {
+    final user = ref.read(authStateChangesProvider).asData?.value;
+    if (user == null) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('25일치 링크를 일괄 등록할까요?'),
+        content: Text(
+          '${_thai25DayPlan.first.dateKey} ~ ${_thai25DayPlan.last.dateKey} '
+          '(평일만, 총 ${_thai25DayPlan.length}일) 동안 매일 다른 링크가 등록됩니다. '
+          '이미 등록된 날짜가 있으면 덮어씁니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('등록'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) {
+      return;
+    }
+
+    setState(() {
+      _running = true;
+      _resultMessage = null;
+    });
+
+    var successCount = 0;
+    final failures = <String>[];
+    for (final entry in _thai25DayPlan) {
+      try {
+        await ref.read(todayLinkRepositoryProvider).setTodayLink(
+          adminUserId: user.uid,
+          url: entry.url,
+          title: entry.title,
+          dateKey: entry.dateKey,
+        );
+        successCount++;
+      } catch (_) {
+        failures.add(entry.dateKey);
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _running = false;
+      _resultIsError = failures.isNotEmpty;
+      _resultMessage = failures.isEmpty
+          ? '$successCount일치 링크를 모두 등록했습니다.'
+          : '$successCount일치 등록 성공, 실패: ${failures.join(', ')}';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSectionCard(
+      title: '태국어 25일 학습계획 일괄 등록',
+      description:
+          '${_thai25DayPlan.first.dateKey} ~ ${_thai25DayPlan.last.dateKey} '
+          '(평일만) 1~25일차 링크를 한 번에 등록합니다. 위 "오늘의 링크 관리" 폼과 같은 저장 경로를 사용합니다.',
+      icon: Icons.playlist_add_check_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_resultMessage != null) ...[
+            AppStatusBanner(
+              isError: _resultIsError,
+              icon: _resultIsError
+                  ? Icons.error_outline
+                  : Icons.check_circle_outline,
+              message: _resultMessage!,
+            ),
+            const SizedBox(height: 12),
+          ],
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton(
+              onPressed: _running ? null : _runBulkSeed,
+              child: Text(_running ? '등록 중...' : '25일치 일괄 등록'),
+            ),
+          ),
+        ],
       ),
     );
   }

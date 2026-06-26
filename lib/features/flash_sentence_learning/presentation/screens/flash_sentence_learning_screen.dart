@@ -10,7 +10,10 @@ import '../../../../core/services/audio_player_service.dart';
 import '../../../../core/widgets/app_section_card.dart';
 import '../../../../core/widgets/learning_action_styles.dart';
 import '../../../../core/widgets/learning_text_emphasis.dart';
+import '../../../../core/widgets/selection_summary_line.dart';
 import '../../../learning_content/data/thai_learning_content.dart';
+import '../../../learning_select/domain/learning_selection_labels.dart'
+    as labels;
 import '../../../sentence_learning/presentation/controllers/current_study_session_controller.dart';
 import '../../../session_runtime/presentation/controllers/study_flow_controller.dart';
 import '../../../session_runtime/presentation/providers/session_runtime_providers.dart';
@@ -144,6 +147,16 @@ class _FlashSentenceLearningScreenState
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
+          if (session != null && l10n != null) ...[
+            SelectionSummaryLine(
+              labels: [
+                labels.categoryLabel(session.category, l10n),
+                labels.levelLabel(session.level, l10n),
+                labels.modeLabel(session.mode, l10n),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
           ...[
             AppSectionCard(
               title: '진행 상태',

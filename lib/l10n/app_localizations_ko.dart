@@ -685,7 +685,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '음성 인식 정책을 선택하세요. 이후에도 변경할 수 있습니다.';
 
   @override
-  String get learningSelectAsrPolicyServerOnly => '서버 우선 인식';
+  String get learningSelectAsrPolicyServerOnly => '서버\n우선';
 
   @override
   String get learningSelectAsrPolicyOffline => '폰 전용 인식';
@@ -713,7 +713,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get learningSelectCategoryDaily => '일상 회화';
 
   @override
-  String get learningSelectCategoryMission => '선교';
+  String get learningSelectCategoryMission => '선교 언어';
 
   @override
   String get learningSelectLevelBeginner => '초급';

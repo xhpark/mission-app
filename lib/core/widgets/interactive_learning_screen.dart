@@ -9,6 +9,7 @@ import 'app_section_card.dart';
 import 'app_status_banner.dart';
 import 'learning_action_styles.dart';
 import 'learning_text_emphasis.dart';
+import 'selection_summary_line.dart';
 
 enum ChoiceTimeoutBehavior {
   block,
@@ -22,6 +23,7 @@ class InteractiveLearningScreen extends StatefulWidget {
     super.key,
     required this.title,
     required this.subtitle,
+    this.selectionSummaryLabels,
     required this.progress,
     required this.progressLabel,
     required this.promptTitle,
@@ -90,6 +92,7 @@ class InteractiveLearningScreen extends StatefulWidget {
 
   final String title;
   final String subtitle;
+  final List<String>? selectionSummaryLabels;
   final double progress;
   final String progressLabel;
   final String promptTitle;
@@ -522,6 +525,11 @@ class _InteractiveLearningScreenState extends State<InteractiveLearningScreen>
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
+          if (widget.selectionSummaryLabels != null &&
+              widget.selectionSummaryLabels!.isNotEmpty) ...[
+            SelectionSummaryLine(labels: widget.selectionSummaryLabels!),
+            const SizedBox(height: 12),
+          ],
           if (!widget.showProgressAtBottom) ...[
             AppSectionCard(
               title: l10n.interactiveProgressTitle,

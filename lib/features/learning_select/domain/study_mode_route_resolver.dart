@@ -10,6 +10,21 @@ String routeForLearningMode(LearningMode mode) => switch (mode) {
   LearningMode.flashSentenceTest => '/flash-sentence-test-select',
 };
 
+/// Where to send the learner if they want to try a different track for the
+/// same flash test mode (choice/speaking/relearn) after finishing one and
+/// submitting (or skipping) the report, instead of restarting from the
+/// learning-select home screen. Returns null for modes that have no such
+/// intermediate hub screen (plain sentence test, and the learning-only
+/// modes).
+String? testSelectRouteForMode(LearningMode mode) => switch (mode) {
+  LearningMode.flashWordTest => '/flash-word-test-select',
+  LearningMode.flashSentenceTest => '/flash-sentence-test-select',
+  LearningMode.sentenceLearning ||
+  LearningMode.sentenceTest ||
+  LearningMode.flashWordLearning ||
+  LearningMode.flashSentenceLearning => null,
+};
+
 String routeForSelectionOrFallback(LearningSelectionState selection) {
   final mode = selection.mode;
   if (mode == null) {

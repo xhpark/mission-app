@@ -114,6 +114,26 @@ interface AdminDashboardData {
   adminUserId: string;
 }
 
+interface GetTodayLinkData {
+  dateKey?: string;
+}
+
+interface SetTodayLinkData {
+  adminUserId: string;
+  dateKey?: string;
+  url: string;
+  title: string;
+}
+
+interface RecordTodayLinkClickData {
+  dateKey?: string;
+}
+
+interface GetTodayLinkClicksData {
+  adminUserId: string;
+  dateKey?: string;
+}
+
 interface ApproveUserData {
   adminUserId: string;
   targetUserId: string;
@@ -2538,3 +2558,143 @@ export const checkWeeklyReportGate = onCall<{userId: string}>(callableOptions, a
     learningBlocked,
   };
 });
+
+const dateKeyPattern = /^\d{4}-\d{2}-\d{2}$/;
+
+function resolveDateKey(rawDateKey: unknown): string {
+  if (typeof rawDateKey === "string" && rawDateKey.trim().length > 0) {
+    const trimmed = rawDateKey.trim();
+    if (!dateKeyPattern.test(trimmed)) {
+      throw new HttpsError("invalid-argument", "INVALID_DATE_KEY");
+    }
+    return trimmed;
+  }
+
+  return dateKeyFromTimestamp(admin.firestore.Timestamp.now());
+}
+
+function ensureHttpUrl(value: unknown, fieldName: string): string {
+  const raw = ensureString(value, fieldName);
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new HttpsError("invalid-argument", "INVALID_URL");
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new HttpsError("invalid-argument", "INVALID_URL");
+  }
+
+  return raw;
+}
+
+export const getTodayLink = onCall<GetTodayLinkData>(callableOptions, async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "AUTH_REQUIRED");
+  }
+
+  const dateKey = resolveDateKey(request.data?.dateKey);
+  const snap = await db.doc(`daily_links/${dateKey}`).get();
+  if (!snap.exists) {
+    return {exists: false, dateKey, url: null, title: null};
+  }
+
+  const data = snap.data() ?? {};
+  return {
+    exists: true,
+    dateKey,
+    url: typeof data.url === "string" ? data.url : null,
+    title: typeof data.title === "string" ? data.title : null,
+  };
+});
+
+export const setTodayLink = onCall<SetTodayLinkData>(callableOptions, async (request) => {
+  const adminUserId = ensureString(request.data?.adminUserId, "adminUserId");
+  await requireAdminUser(request.auth?.uid, request.auth?.token, adminUserId);
+
+  const dateKey = resolveDateKey(request.data?.dateKey);
+  const url = ensureHttpUrl(request.data?.url, "url");
+  const title = ensureString(request.data?.title, "title");
+
+  await db.doc(`daily_links/${dateKey}`).set(
+    {
+      url,
+      title,
+      dateKey,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: adminUserId,
+    },
+    {merge: true},
+  );
+
+  return {saved: true, dateKey, url, title};
+});
+
+export const recordTodayLinkClick = onCall<RecordTodayLinkClickData>(
+  callableOptions,
+  async (request) => {
+    const userId = request.auth?.uid;
+    if (!userId) {
+      throw new HttpsError("unauthenticated", "AUTH_REQUIRED");
+    }
+
+    const dateKey = resolveDateKey(request.data?.dateKey);
+    await db.collection(`daily_links/${dateKey}/clickEvents`).add({
+      userId,
+      dateKey,
+      clickedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return {recorded: true, dateKey};
+  },
+);
+
+export const getTodayLinkClicks = onCall<GetTodayLinkClicksData>(
+  callableOptions,
+  async (request) => {
+    const adminUserId = ensureString(request.data?.adminUserId, "adminUserId");
+    await requireAdminUser(request.auth?.uid, request.auth?.token, adminUserId);
+
+    const dateKey = resolveDateKey(request.data?.dateKey);
+    const eventsSnap = await db
+      .collection(`daily_links/${dateKey}/clickEvents`)
+      .orderBy("clickedAt", "asc")
+      .get();
+
+    const clickedAtByUserId = new Map<string, string[]>();
+    for (const doc of eventsSnap.docs) {
+      const data = doc.data();
+      const userId = typeof data.userId === "string" ? data.userId : null;
+      const clickedAt = data.clickedAt as admin.firestore.Timestamp | undefined;
+      if (!userId || !clickedAt) {
+        continue;
+      }
+      const list = clickedAtByUserId.get(userId) ?? [];
+      list.push(clickedAt.toDate().toISOString());
+      clickedAtByUserId.set(userId, list);
+    }
+
+    const learners = await Promise.all(
+      Array.from(clickedAtByUserId.entries()).map(async ([userId, clickedAt]) => {
+        const profileSnap = await db.doc(`user_profiles/${userId}`).get();
+        const profile = profileSnap.data() ?? {};
+        return {
+          userId,
+          name: (profile.displayName ?? profile.name ?? profile.learnerName ?? "-").toString(),
+          email: normalizeEmail(profile.email),
+          clickCount: clickedAt.length,
+          clickedAt,
+        };
+      }),
+    );
+    learners.sort((a, b) => a.name.localeCompare(b.name, "ko"));
+
+    return {
+      dateKey,
+      totalClicks: eventsSnap.size,
+      totalLearners: learners.length,
+      learners,
+    };
+  },
+);

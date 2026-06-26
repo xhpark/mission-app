@@ -20,6 +20,8 @@ import '../../domain/study_mode_route_resolver.dart';
 import '../controllers/learning_selection_controller.dart';
 import '../controllers/start_study_session_controller.dart';
 import '../widgets/asr_model_download_flow.dart';
+import '../widgets/learning_settings_sheet.dart';
+import '../widgets/today_link_quick_action.dart';
 
 final _startActionChoiceProvider =
     NotifierProvider<_StartActionChoiceController, _StartActionChoice>(
@@ -86,6 +88,10 @@ class LearningSelectScreen extends ConsumerWidget {
                   value: _SelectMenuAction.resume,
                   child: Text(l10n?.menuResume ?? '이어하기'),
                 ),
+                const PopupMenuItem(
+                  value: _SelectMenuAction.settings,
+                  child: Text('학습 설정'),
+                ),
                 PopupMenuItem(
                   value: _SelectMenuAction.signOut,
                   child: Text(l10n?.menuSignOut ?? '로그아웃'),
@@ -97,62 +103,71 @@ class LearningSelectScreen extends ConsumerWidget {
         body: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           children: [
+            AppSectionCard(
+              title: '오늘의 학습과 복습',
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              backgroundColor: AppColors.dailyHighlight,
+              child: TodayLinkQuickAction(isAdmin: isAdmin),
+            ),
+            const SizedBox(height: 8),
             if (isAdmin) ...[
               AppSectionCard(
                 title: '관리자 메뉴',
                 description: '학습자 승인, 리포트 현황, 일간/주간 학습 통계를 확인할 수 있습니다.',
                 icon: Icons.admin_panel_settings_outlined,
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: FilledButton.icon(
-                    onPressed: () => context.go('/admin-dashboard'),
-                    icon: const Icon(Icons.dashboard_outlined),
-                    label: const Text('관리자 대시보드 열기'),
-                  ),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: () => context.go('/admin-dashboard'),
+                      icon: const Icon(Icons.dashboard_outlined),
+                      label: const Text('관리자 대시보드 열기'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () =>
+                          context.push('/admin-today-link-clicks'),
+                      icon: const Icon(Icons.touch_app_outlined),
+                      label: const Text('오늘의 학습/복습 링크'),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),
             ],
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: AppSectionCard(
-                    title: l10n?.categoryLabel ?? '학습 선택',
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                    child: _ChoiceChipRow<LearningCategory>(
-                      values: LearningCategory.values,
-                      selected: selection.category,
-                      labelBuilder: (value) => _categoryLabel(value, l10n),
-                      onSelected: (value) {
-                        selectionController.selectCategory(value);
-                        ref
-                            .read(startStudySessionControllerProvider.notifier)
-                            .clearError();
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: AppSectionCard(
-                    title: l10n?.levelLabel ?? '난이도 선택',
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                    child: _ChoiceChipRow<LearningLevel>(
-                      values: LearningLevel.values,
-                      selected: selection.level,
-                      labelBuilder: (value) => _levelLabel(value, l10n),
-                      onSelected: (value) {
-                        selectionController.selectLevel(value);
-                        ref
-                            .read(startStudySessionControllerProvider.notifier)
-                            .clearError();
-                      },
-                    ),
-                  ),
-                ),
-              ],
+            AppSectionCard(
+              title: l10n?.categoryLabel ?? '학습 선택',
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: _ChoiceChipRow<LearningCategory>(
+                values: LearningCategory.values,
+                selected: selection.category,
+                labelBuilder: (value) => _categoryLabel(value, l10n),
+                equalWidth: true,
+                onSelected: (value) {
+                  selectionController.selectCategory(value);
+                  ref
+                      .read(startStudySessionControllerProvider.notifier)
+                      .clearError();
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+            AppSectionCard(
+              title: l10n?.levelLabel ?? '난이도 선택',
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: _ChoiceChipRow<LearningLevel>(
+                values: LearningLevel.values,
+                selected: selection.level,
+                labelBuilder: (value) => _levelLabel(value, l10n),
+                centered: true,
+                onSelected: (value) {
+                  selectionController.selectLevel(value);
+                  ref
+                      .read(startStudySessionControllerProvider.notifier)
+                      .clearError();
+                },
+              ),
             ),
             const SizedBox(height: 8),
             AppSectionCard(
@@ -188,8 +203,8 @@ class LearningSelectScreen extends ConsumerWidget {
                   child: _AsrPolicyCard(
                     title: l10n?.learningSelectAsrPolicyTitle ?? '음성 인식 선택',
                     serverFirstLabel:
-                        l10n?.learningSelectAsrPolicyServerOnly ?? '서버 우선 인식',
-                    offlineLabel: '폰\n전용\n인식',
+                        l10n?.learningSelectAsrPolicyServerOnly ?? '서버\n우선',
+                    offlineLabel: '폰 전용',
                     policy: asrPolicy,
                     onServerFirstSelected: () {
                       ref.read(asrPolicyProvider.notifier).chooseServerFirst();
@@ -239,7 +254,11 @@ class LearningSelectScreen extends ConsumerWidget {
               : (l10n?.startSession ?? '학습 시작'),
           primaryMinHeight: 66,
           primaryTextStyle: Theme.of(context).textTheme.headlineMedium
-              ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.3),
+              ?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+                color: Colors.white,
+              ),
           primaryBackgroundColor: AppColors.primary.withValues(alpha: 0.78),
           primaryForegroundColor: Colors.white,
           primaryIcon: Icons.play_arrow_rounded,
@@ -271,6 +290,8 @@ class LearningSelectScreen extends ConsumerWidget {
         context.go('/guide');
       case _SelectMenuAction.resume:
         context.go('/resume');
+      case _SelectMenuAction.settings:
+        LearningSettingsSheet.show(context);
       case _SelectMenuAction.signOut:
         _returnToLogin(context, ref);
     }
@@ -390,7 +411,7 @@ class LearningSelectScreen extends ConsumerWidget {
   }
 }
 
-enum _SelectMenuAction { adminDashboard, myHistory, guide, resume, signOut }
+enum _SelectMenuAction { adminDashboard, myHistory, guide, resume, settings, signOut }
 
 enum _StartActionChoice { resume, startNew }
 
@@ -421,7 +442,7 @@ class _AsrPolicyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final segmentTextStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-      fontWeight: FontWeight.w800,
+      fontWeight: FontWeight.w500,
       height: 1.12,
       letterSpacing: -0.4,
     );
@@ -430,11 +451,12 @@ class _AsrPolicyCard extends StatelessWidget {
       title: title,
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       child: SegmentedButton<AsrPolicyMode>(
+        showSelectedIcon: false,
         segments: [
           ButtonSegment<AsrPolicyMode>(
             value: AsrPolicyMode.serverFirst,
             label: Text(
-              serverFirstLabel.replaceAll(' ', '\n'),
+              serverFirstLabel,
               textAlign: TextAlign.center,
               style: segmentTextStyle,
             ),
@@ -558,15 +580,14 @@ class _StartActionChoiceCard extends StatelessWidget {
       title: title,
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       child: SegmentedButton<_StartActionChoice>(
+        showSelectedIcon: false,
         segments: [
           ButtonSegment<_StartActionChoice>(
             value: _StartActionChoice.resume,
-            icon: const Icon(Icons.history_outlined, size: 20),
             label: Text(resumeLabel),
           ),
           ButtonSegment<_StartActionChoice>(
             value: _StartActionChoice.startNew,
-            icon: const Icon(Icons.play_arrow_rounded, size: 20),
             label: Text(startNewLabel),
           ),
         ],
@@ -583,6 +604,8 @@ class _ChoiceChipRow<T> extends StatelessWidget {
     required this.selected,
     required this.labelBuilder,
     required this.onSelected,
+    this.equalWidth = false,
+    this.centered = false,
   });
 
   final List<T> values;
@@ -590,34 +613,74 @@ class _ChoiceChipRow<T> extends StatelessWidget {
   final String Function(T value) labelBuilder;
   final ValueChanged<T> onSelected;
 
+  /// Stacks every chip at the full available width instead of letting each
+  /// size to its own label, so chips with shorter/longer text (e.g. "일상
+  /// 회화" vs "선교 언어") render at identical size.
+  final bool equalWidth;
+
+  /// Centers the chip group horizontally instead of hugging the left edge.
+  final bool centered;
+
   @override
   Widget build(BuildContext context) {
     final labelStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
-      fontWeight: FontWeight.w800,
+      fontWeight: FontWeight.w500,
       letterSpacing: -0.2,
     );
+
+    Widget buildChip(T value) {
+      final isSelected = value == selected;
+      return ChoiceChip(
+        label: Text(labelBuilder(value), textAlign: TextAlign.center),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        visualDensity: VisualDensity.compact,
+        selected: isSelected,
+        onSelected: (_) => onSelected(value),
+        backgroundColor: AppColors.surface,
+        selectedColor: AppColors.primary,
+        checkmarkColor: Colors.white,
+        side: BorderSide(
+          color: isSelected ? AppColors.primary : AppColors.border,
+          width: 1.4,
+        ),
+        labelStyle: labelStyle?.copyWith(
+          color: isSelected ? Colors.white : AppColors.textStrong,
+        ),
+      );
+    }
+
+    if (equalWidth) {
+      final chips = values.map(buildChip).toList();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < chips.length; i++) ...[
+            if (i > 0) const SizedBox(height: 8),
+            chips[i],
+          ],
+        ],
+      );
+    }
+
+    if (centered) {
+      final chips = values.map(buildChip).toList();
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          for (var i = 0; i < chips.length; i++) ...[
+            if (i > 0) const SizedBox(width: 8),
+            chips[i],
+          ],
+        ],
+      );
+    }
 
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: values.map((value) {
-        final isSelected = value == selected;
-        return ChoiceChip(
-          label: Text(labelBuilder(value)),
-          selected: isSelected,
-          onSelected: (_) => onSelected(value),
-          backgroundColor: AppColors.surface,
-          selectedColor: AppColors.primary,
-          checkmarkColor: Colors.white,
-          side: BorderSide(
-            color: isSelected ? AppColors.primary : AppColors.border,
-            width: 1.4,
-          ),
-          labelStyle: labelStyle?.copyWith(
-            color: isSelected ? Colors.white : AppColors.textStrong,
-          ),
-        );
-      }).toList(),
+      children: values.map(buildChip).toList(),
     );
   }
 }
@@ -625,7 +688,8 @@ class _ChoiceChipRow<T> extends StatelessWidget {
 String _categoryLabel(LearningCategory category, AppLocalizations? l10n) =>
     switch (category) {
       LearningCategory.daily => l10n?.learningSelectCategoryDaily ?? '일상 회화',
-      LearningCategory.mission => l10n?.learningSelectCategoryMission ?? '선교',
+      LearningCategory.mission =>
+        l10n?.learningSelectCategoryMission ?? '선교 언어',
     };
 
 String _levelLabel(LearningLevel level, AppLocalizations? l10n) =>

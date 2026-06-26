@@ -52,6 +52,8 @@ dependencies:
   firebase_storage: ^13.2.0
   connectivity_plus: ^7.0.0
   crypto: ^3.0.6
+  url_launcher: ^6.3.1
+  google_fonts: ^6.2.1
 
   intl: any
   sherpa_onnx: ^1.12.39

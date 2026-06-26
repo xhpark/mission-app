@@ -54,5 +54,15 @@ service cloud.firestore {
       allow read: if isOwner(userId);
       allow write: if false;
     }
+
+    match /daily_links/{dateKey} {
+      allow read: if isSignedIn();
+      allow write: if false;
+
+      match /clickEvents/{eventId} {
+        allow read: if false;
+        allow write: if false;
+      }
+    }
   }
 }

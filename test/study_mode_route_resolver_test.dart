@@ -4,6 +4,29 @@ import 'package:mission_app/features/learning_select/presentation/controllers/le
 import 'package:mission_app/features/session_runtime/presentation/controllers/study_flow_controller.dart';
 
 void main() {
+  group('testSelectRouteForMode', () {
+    test('flash test modes resolve to their test-select hub', () {
+      expect(
+        testSelectRouteForMode(LearningMode.flashWordTest),
+        '/flash-word-test-select',
+      );
+      expect(
+        testSelectRouteForMode(LearningMode.flashSentenceTest),
+        '/flash-sentence-test-select',
+      );
+    });
+
+    test('modes without a select hub return null', () {
+      expect(testSelectRouteForMode(LearningMode.sentenceLearning), isNull);
+      expect(testSelectRouteForMode(LearningMode.sentenceTest), isNull);
+      expect(testSelectRouteForMode(LearningMode.flashWordLearning), isNull);
+      expect(
+        testSelectRouteForMode(LearningMode.flashSentenceLearning),
+        isNull,
+      );
+    });
+  });
+
   // Resuming a two-stage test (choice -> speaking) used to always send the
   // learner back to the mode's default entry screen, ignoring how far they
   // had actually progressed. A learner who had already finished both stages
