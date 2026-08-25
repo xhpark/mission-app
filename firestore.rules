@@ -69,5 +69,9 @@ service cloud.firestore {
       allow read: if false;
       allow write: if false;
     }
+
+    match /daily_activity_reports/{dateKey} {
+      allow read, write: if false;
+    }
   }
 }

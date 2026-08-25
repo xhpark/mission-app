@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import nodemailer from "nodemailer";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {onSchedule} from "firebase-functions/v2/scheduler";
 import {setGlobalOptions} from "firebase-functions/v2";
 import {GoogleAuth} from "google-auth-library";
 import {
@@ -132,6 +133,22 @@ interface RecordTodayLinkClickData {
 interface GetTodayLinkClicksData {
   adminUserId: string;
   dateKey?: string;
+}
+
+interface StartSimilarityEventData {
+  adminUserId: string;
+  contentSetId: string;
+  itemId: string;
+}
+
+interface EndSimilarityEventData {
+  adminUserId: string;
+  eventId: string;
+}
+
+interface GetSimilarityEventData {
+  adminUserId: string;
+  eventId?: string;
 }
 
 interface AddLearnerRosterEntriesData {
@@ -331,7 +348,11 @@ function timestampFromIso(value: unknown): admin.firestore.Timestamp | null {
     return null;
   }
 
-  const parsed = new Date(value);
+  const trimmed = value.trim();
+  const hasTimeZone = /(?:z|[+-]\d{2}:?\d{2})$/i.test(trimmed);
+  const parsed = hasTimeZone ?
+    new Date(trimmed) :
+    new Date(new Date(`${trimmed}Z`).getTime() - kstOffsetMs);
   if (Number.isNaN(parsed.getTime())) {
     throw new HttpsError("invalid-argument", "completedAt must be an ISO timestamp");
   }
@@ -379,6 +400,31 @@ function nullableSafeNumber(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function timestampMillis(value: unknown): number {
+  if (value instanceof admin.firestore.Timestamp) {
+    return value.toMillis();
+  }
+
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  return 0;
+}
+
+function isFirestoreIndexNotReady(error: unknown): boolean {
+  if (error === null || typeof error !== "object") {
+    return false;
+  }
+  const candidate = error as {code?: unknown; details?: unknown; message?: unknown};
+  const code = candidate.code;
+  const details = `${candidate.details ?? ""} ${candidate.message ?? ""}`;
+  return code === 9 &&
+    details.includes("index") &&
+    details.includes("not ready");
+}
+
 const kstOffsetMs = 9 * 60 * 60 * 1000;
 
 function formatUtcDateKey(value: Date): string {
@@ -394,6 +440,289 @@ function kstCalendarDate(value: admin.firestore.Timestamp): Date {
 
 function dateKeyFromTimestamp(value: admin.firestore.Timestamp): string {
   return formatUtcDateKey(kstCalendarDate(value));
+}
+
+function formatKstDateTime(value: Date | admin.firestore.Timestamp): string {
+  const date = value instanceof admin.firestore.Timestamp ? value.toDate() : value;
+  const kst = new Date(date.getTime() + kstOffsetMs);
+  const year = kst.getUTCFullYear().toString().padStart(4, "0");
+  const month = (kst.getUTCMonth() + 1).toString().padStart(2, "0");
+  const day = kst.getUTCDate().toString().padStart(2, "0");
+  const hour = kst.getUTCHours().toString().padStart(2, "0");
+  const minute = kst.getUTCMinutes().toString().padStart(2, "0");
+  const second = kst.getUTCSeconds().toString().padStart(2, "0");
+  return `${year}-${month}-${day} ${hour}:${minute}:${second} KST`;
+}
+
+async function activeSimilarityEvent(): Promise<{eventId: string; data: Record<string, unknown>} | null> {
+  const snap = await db.collection("similarity_events")
+    .where("status", "==", "active")
+    .limit(1)
+    .get();
+  if (snap.empty) {
+    return null;
+  }
+  const doc = snap.docs[0];
+  return {eventId: doc.id, data: doc.data() as Record<string, unknown>};
+}
+
+async function similarityEventDashboard(eventId?: string) {
+  let eventDoc: admin.firestore.QueryDocumentSnapshot | admin.firestore.DocumentSnapshot | null = null;
+  if (eventId && eventId.length > 0) {
+    const doc = await db.doc(`similarity_events/${eventId}`).get();
+    eventDoc = doc.exists ? doc : null;
+  } else {
+    const activeSnap = await db.collection("similarity_events")
+      .where("status", "==", "active")
+      .limit(1)
+      .get();
+    if (!activeSnap.empty) {
+      eventDoc = activeSnap.docs[0];
+    } else {
+      const latestSnap = await db.collection("similarity_events")
+        .orderBy("startedAt", "desc")
+        .limit(1)
+        .get();
+      eventDoc = latestSnap.empty ? null : latestSnap.docs[0];
+    }
+  }
+
+  if (!eventDoc || !eventDoc.exists) {
+    return {
+      event: null,
+      totalLearners: 0,
+      totalAttempts: 0,
+      rankings: [],
+    };
+  }
+
+  const event = eventDoc.data() as Record<string, unknown>;
+  let resultsSnap;
+  let receptionSnap;
+  try {
+    resultsSnap = await db.collectionGroup("items")
+      .where("similarityEventId", "==", eventDoc.id)
+      .get();
+    receptionSnap = await db.collectionGroup("items")
+      .where("similarityEventReceptionId", "==", eventDoc.id)
+      .get();
+  } catch (error) {
+    if (isFirestoreIndexNotReady(error)) {
+      console.warn("similarityEventDashboard index not ready", {eventId: eventDoc.id, error});
+      return {
+        event: {
+          eventId: eventDoc.id,
+          status: (event.status ?? "").toString(),
+          contentSetId: (event.contentSetId ?? "").toString(),
+          itemId: (event.itemId ?? "").toString(),
+          expectedText: (event.expectedText ?? "").toString(),
+          startedAt: timestampToIso(event.startedAt),
+          endedAt: timestampToIso(event.endedAt),
+        },
+        totalLearners: 0,
+        totalAttempts: 0,
+        rankings: [],
+        averageTotalLearners: 0,
+        averageTotalAttempts: 0,
+        averageRankings: [],
+        indexPending: true,
+      };
+    }
+    throw error;
+  }
+  const profileIds = new Set<string>();
+  const bestByUser = new Map<string, Record<string, unknown>>();
+  const averageByUser = new Map<string, {sum: number; count: number; latestEvaluatedAt: string}>();
+
+  for (const doc of resultsSnap.docs) {
+    const data = doc.data() as Record<string, unknown>;
+    const userId = (data.userId ?? "").toString();
+    const score = nullableSafeNumber(data.similarityScore);
+    if (userId.length === 0 || score === null) {
+      continue;
+    }
+    profileIds.add(userId);
+    const prev = bestByUser.get(userId);
+    const prevScore = nullableSafeNumber(prev?.similarityScore);
+    const prevTime = timestampMillis(prev?.evaluatedAt);
+    const nextTime = timestampMillis(data.evaluatedAt);
+    if (
+      prev === undefined ||
+      score > (prevScore ?? -1) ||
+      (score === prevScore && nextTime > prevTime)
+    ) {
+      bestByUser.set(userId, data);
+    }
+  }
+
+  for (const doc of receptionSnap.docs) {
+    const data = doc.data() as Record<string, unknown>;
+    const userId = (data.userId ?? "").toString();
+    const score = nullableSafeNumber(data.similarityScore);
+    if (userId.length === 0 || score === null) {
+      continue;
+    }
+    profileIds.add(userId);
+    const evaluatedAt = timestampToIso(data.evaluatedAt);
+    const prev = averageByUser.get(userId) ?? {sum: 0, count: 0, latestEvaluatedAt: ""};
+    averageByUser.set(userId, {
+      sum: prev.sum + Math.max(0, Math.min(100, score)),
+      count: prev.count + 1,
+      latestEvaluatedAt: evaluatedAt.localeCompare(prev.latestEvaluatedAt) > 0 ? evaluatedAt : prev.latestEvaluatedAt,
+    });
+  }
+
+  const profiles = await Promise.all(
+    [...profileIds].map(async (userId) => {
+      const snap = await db.doc(`user_profiles/${userId}`).get();
+      return [userId, snap.data() ?? {}] as const;
+    }),
+  );
+  const profileByUserId = new Map(profiles);
+
+  const profileName = (profile: Record<string, unknown>) => (
+    profile.learnerName ??
+    profile.displayName ??
+    profile.name ??
+    "-"
+  ).toString();
+  const profilePhone = (profile: Record<string, unknown>) => (
+    profile.learnerPhone ??
+    profile.phoneNumber ??
+    profile.phone ??
+    "-"
+  ).toString();
+
+  const rankings = [...bestByUser.entries()].map(([userId, data]) => {
+    const profile = profileByUserId.get(userId) ?? {};
+    return {
+      userId,
+      learnerEmail: normalizeEmail(profile.email),
+      learnerName: profileName(profile),
+      learnerPhone: profilePhone(profile),
+      similarityScore: Math.max(0, Math.min(100, Math.round(safeNumber(data.similarityScore)))),
+      passed: data.passed === true,
+      transcript: (data.transcript ?? "").toString(),
+      mode: (data.mode ?? "").toString(),
+      sessionId: (data.sessionId ?? "").toString(),
+      evaluatedAt: timestampToIso(data.evaluatedAt),
+      onDeviceFallback: data.onDeviceFallback === true,
+    };
+  }).sort((a, b) =>
+    b.similarityScore - a.similarityScore ||
+    b.evaluatedAt.localeCompare(a.evaluatedAt) ||
+    a.learnerName.localeCompare(b.learnerName, "ko"),
+  );
+
+  const averageRankings = [...averageByUser.entries()].map(([userId, stats]) => {
+    const profile = profileByUserId.get(userId) ?? {};
+    return {
+      userId,
+      learnerName: profileName(profile),
+      learnerPhone: profilePhone(profile),
+      averageSimilarity: stats.count === 0 ? 0 : Math.round(stats.sum / stats.count),
+      attemptCount: stats.count,
+      latestEvaluatedAt: stats.latestEvaluatedAt,
+    };
+  }).sort((a, b) =>
+    b.averageSimilarity - a.averageSimilarity ||
+    b.attemptCount - a.attemptCount ||
+    b.latestEvaluatedAt.localeCompare(a.latestEvaluatedAt) ||
+    a.learnerName.localeCompare(b.learnerName, "ko"),
+  );
+
+  // Report-based ranking: collect averageSimilarity from each report submitted
+  // during the event period, then average per learner.
+  const eventStartedAt = event.startedAt instanceof admin.firestore.Timestamp
+    ? event.startedAt
+    : admin.firestore.Timestamp.fromMillis(0);
+  const eventEndedAt = event.endedAt instanceof admin.firestore.Timestamp
+    ? event.endedAt
+    : admin.firestore.Timestamp.now();
+
+  let reportSnap: admin.firestore.QuerySnapshot | null = null;
+  try {
+    reportSnap = await db.collectionGroup("report_history")
+      .where("submittedAt", ">=", eventStartedAt)
+      .where("submittedAt", "<=", eventEndedAt)
+      .get();
+  } catch (error) {
+    if (isFirestoreIndexNotReady(error)) {
+      console.warn("similarityEventDashboard report_history index not ready", {eventId: eventDoc.id, error});
+    } else {
+      throw error;
+    }
+  }
+
+  const reportByUser = new Map<string, {sum: number; count: number; latestSubmittedAt: string}>();
+  if (reportSnap) {
+    for (const doc of reportSnap.docs) {
+      const data = doc.data() as Record<string, unknown>;
+      const userId = (data.userId ?? "").toString();
+      const sim = nullableSafeNumber(data.averageSimilarity);
+      if (userId.length === 0 || sim === null) continue;
+      const submittedAt = timestampToIso(data.submittedAt);
+      const prev = reportByUser.get(userId) ?? {sum: 0, count: 0, latestSubmittedAt: ""};
+      reportByUser.set(userId, {
+        sum: prev.sum + Math.max(0, Math.min(100, sim)),
+        count: prev.count + 1,
+        latestSubmittedAt: submittedAt.localeCompare(prev.latestSubmittedAt) > 0
+          ? submittedAt : prev.latestSubmittedAt,
+      });
+    }
+  }
+
+  // Fetch profiles for any new userIds not already loaded
+  const newReportUserIds = [...reportByUser.keys()].filter((uid) => !profileByUserId.has(uid));
+  if (newReportUserIds.length > 0) {
+    const extra = await Promise.all(
+      newReportUserIds.map(async (uid) => {
+        const snap = await db.doc(`user_profiles/${uid}`).get();
+        return [uid, snap.data() ?? {}] as const;
+      }),
+    );
+    for (const [uid, profile] of extra) {
+      profileByUserId.set(uid, profile as Record<string, unknown>);
+    }
+  }
+
+  const reportRankings = [...reportByUser.entries()].map(([userId, stats]) => {
+    const profile = profileByUserId.get(userId) ?? {};
+    return {
+      userId,
+      learnerName: profileName(profile),
+      learnerPhone: profilePhone(profile),
+      averageSimilarity: Math.round(stats.sum / stats.count),
+      reportCount: stats.count,
+      latestSubmittedAt: stats.latestSubmittedAt,
+    };
+  }).sort((a, b) =>
+    b.averageSimilarity - a.averageSimilarity ||
+    b.reportCount - a.reportCount ||
+    b.latestSubmittedAt.localeCompare(a.latestSubmittedAt) ||
+    a.learnerName.localeCompare(b.learnerName, "ko"),
+  );
+
+  return {
+    event: {
+      eventId: eventDoc.id,
+      status: (event.status ?? "").toString(),
+      contentSetId: (event.contentSetId ?? "").toString(),
+      itemId: (event.itemId ?? "").toString(),
+      expectedText: (event.expectedText ?? "").toString(),
+      startedAt: timestampToIso(event.startedAt),
+      endedAt: timestampToIso(event.endedAt),
+    },
+    totalLearners: rankings.length,
+    totalAttempts: resultsSnap.size,
+    rankings: rankings.slice(0, 5),
+    averageTotalLearners: averageRankings.length,
+    averageTotalAttempts: receptionSnap.size,
+    averageRankings: averageRankings.slice(0, 5),
+    reportTotalLearners: reportRankings.length,
+    reportTotalReports: reportSnap ? reportSnap.size : 0,
+    reportRankings: reportRankings.slice(0, 10),
+  };
 }
 
 function monthKeyFromDateKey(dateKey: string): string {
@@ -1429,6 +1758,19 @@ export const evaluateSpeakingAttempt = onCall<EvaluateSpeakingAttemptData>(calla
   }
 
   const attemptRef = db.doc(`test_results/${userId}/attempts/${sessionId}`);
+  const activeEvent = await activeSimilarityEvent();
+  const isEventTarget = activeEvent !== null &&
+    (activeEvent.data.contentSetId ?? "").toString() === contentSetId &&
+    (activeEvent.data.itemId ?? "").toString() === itemId &&
+    (activeEvent.data.expectedText ?? "").toString() === expectedText;
+  const similarityEventFields = activeEvent === null ? {} : {
+    similarityEventReceptionId: activeEvent.eventId,
+    similarityEventReceptionItemId: itemId,
+    ...(isEventTarget ? {
+      similarityEventId: activeEvent.eventId,
+      similarityEventItemId: itemId,
+    } : {}),
+  };
   await attemptRef.set(
     {
       userId,
@@ -1453,6 +1795,7 @@ export const evaluateSpeakingAttempt = onCall<EvaluateSpeakingAttemptData>(calla
       durationMs: Number.isFinite(durationMs) ? durationMs : 0,
       errorCode,
       evaluatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      ...similarityEventFields,
     },
     {merge: true},
   );
@@ -1517,6 +1860,19 @@ export const submitOnDeviceSpeakingFallback = onCall<SubmitOnDeviceSpeakingFallb
     "sherpa_onnx";
 
   const attemptRef = db.doc(`test_results/${userId}/attempts/${sessionId}`);
+  const activeEvent = await activeSimilarityEvent();
+  const isEventTarget = activeEvent !== null &&
+    (activeEvent.data.contentSetId ?? "").toString() === contentSetId &&
+    (activeEvent.data.itemId ?? "").toString() === itemId &&
+    (activeEvent.data.expectedText ?? "").toString() === expectedText;
+  const similarityEventFields = activeEvent === null ? {} : {
+    similarityEventReceptionId: activeEvent.eventId,
+    similarityEventReceptionItemId: itemId,
+    ...(isEventTarget ? {
+      similarityEventId: activeEvent.eventId,
+      similarityEventItemId: itemId,
+    } : {}),
+  };
   await attemptRef.set(
     {
       userId,
@@ -1543,6 +1899,7 @@ export const submitOnDeviceSpeakingFallback = onCall<SubmitOnDeviceSpeakingFallb
       fallbackEngine: engine,
       errorCode: null,
       evaluatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      ...similarityEventFields,
     },
     {merge: true},
   );
@@ -1705,14 +2062,17 @@ export const completeReportSubmission = onCall<CompleteReportSubmissionData>(cal
     Math.min(completedItemsRaw, totalItems) :
     completedItemsRaw;
   const completionRate = calculatePercent(completedItems, totalItems);
-  const completedAt = timestampFromIso(request.data?.completedAt) ??
-    admin.firestore.Timestamp.now();
+  // Use one server-side timestamp for both completion and submission bookkeeping.
+  // Older clients sent local ISO strings without a timezone, which could be
+  // parsed as UTC and shift KST report dates by +9 hours.
+  const reportRecordedAt = admin.firestore.Timestamp.now();
+  const completedAt = reportRecordedAt;
   const durationSeconds = durationSecondsFromClient ??
     secondsBetween(sessionData.startedAt, completedAt);
   if (durationSeconds > 24 * 60 * 60) {
     throw new HttpsError("invalid-argument", "DURATION_SECONDS_OUT_OF_RANGE");
   }
-  const submittedAt = admin.firestore.FieldValue.serverTimestamp();
+  const submittedAt = reportRecordedAt;
   const startedAt = sessionData.startedAt instanceof admin.firestore.Timestamp ?
     sessionData.startedAt :
     null;
@@ -1941,7 +2301,7 @@ export const completeReportSubmission = onCall<CompleteReportSubmissionData>(cal
   );
 
   const reportDeviceId = (profileData.deviceId ?? "").toString();
-  const reportDateText = completedAt.toDate().toLocaleString("ko-KR", {timeZone: "Asia/Seoul"});
+  const reportDateText = formatKstDateTime(completedAt);
   const reportNoticeText = [
     "📄 리포트 제출",
     "",
@@ -1950,7 +2310,7 @@ export const completeReportSubmission = onCall<CompleteReportSubmissionData>(cal
     `이메일: ${learnerEmail.length > 0 ? learnerEmail : "-"}`,
     `사용자 ID: ${userId}`,
     `기기 ID: ${reportDeviceId.length > 0 ? reportDeviceId : "-"}`,
-    `리포트 날짜: ${reportDateText}`,
+    `리포트 날짜(한국시간): ${reportDateText}`,
     "",
     `학습: ${category || "-"} / ${level || "-"} / ${mode || "-"}`,
     `완료율: ${completionRate}% (${completedItems}/${totalItems})`,
@@ -2338,6 +2698,65 @@ export const getAdminDashboard = onCall<AdminDashboardData>(callableOptions, asy
     needsAttentionLearners: byRisk.slice(0, 5),
     recentReports,
   };
+});
+
+export const startSimilarityEvent = onCall<StartSimilarityEventData>(callableOptions, async (request) => {
+  const adminUserId = ensureString(request.data?.adminUserId, "adminUserId");
+  await requireAdminUser(request.auth?.uid, request.auth?.token, adminUserId);
+
+  const contentSetId = ensureString(request.data?.contentSetId, "contentSetId");
+  const itemId = ensureString(request.data?.itemId, "itemId");
+  const manifestItem = getManifestItem(contentSetId, itemId);
+  if (manifestItem === null || manifestItem.type !== "sentence") {
+    throw new HttpsError("invalid-argument", "SIMILARITY_EVENT_SENTENCE_NOT_FOUND");
+  }
+
+  const now = admin.firestore.Timestamp.now();
+  const activeSnap = await db.collection("similarity_events")
+    .where("status", "==", "active")
+    .get();
+  const batch = db.batch();
+  for (const doc of activeSnap.docs) {
+    batch.set(doc.ref, {
+      status: "ended",
+      endedAt: now,
+      endedBy: adminUserId,
+    }, {merge: true});
+  }
+  const eventRef = db.collection("similarity_events").doc();
+  batch.set(eventRef, {
+    status: "active",
+    contentSetId,
+    itemId,
+    expectedText: manifestItem.expectedText,
+    startedAt: now,
+    startedBy: adminUserId,
+    createdAt: now,
+  });
+  await batch.commit();
+
+  return similarityEventDashboard(eventRef.id);
+});
+
+export const endSimilarityEvent = onCall<EndSimilarityEventData>(callableOptions, async (request) => {
+  const adminUserId = ensureString(request.data?.adminUserId, "adminUserId");
+  await requireAdminUser(request.auth?.uid, request.auth?.token, adminUserId);
+
+  const eventId = ensureString(request.data?.eventId, "eventId");
+  await db.doc(`similarity_events/${eventId}`).set({
+    status: "ended",
+    endedAt: admin.firestore.Timestamp.now(),
+    endedBy: adminUserId,
+  }, {merge: true});
+
+  return similarityEventDashboard(eventId);
+});
+
+export const getSimilarityEventDashboard = onCall<GetSimilarityEventData>(callableOptions, async (request) => {
+  const adminUserId = ensureString(request.data?.adminUserId, "adminUserId");
+  await requireAdminUser(request.auth?.uid, request.auth?.token, adminUserId);
+  const eventId = optionalString(request.data?.eventId);
+  return similarityEventDashboard(eventId.length > 0 ? eventId : undefined);
 });
 
 export const approveLearnerAccount = onCall<ApproveUserData>(callableOptions, async (request) => {
@@ -2820,5 +3239,338 @@ export const deleteLearnerRosterEntry = onCall<DeleteLearnerRosterEntryData>(
 
     await db.doc(`learner_roster/${rosterId}`).delete();
     return {deleted: true};
+  },
+);
+
+// ─── Daily Activity Report ──────────────────────────────────────────────────
+
+interface DailyActivityLearner {
+  uid: string;
+  name: string;
+  phone: string;
+  durationSeconds: number;
+  durationSource: "completed" | "proxy" | "none";
+  sessionCount: number;
+  totalItems: number;
+  speakingItems: number;
+  avgSimilarity: number | null;
+}
+
+interface DailyActivityReport {
+  dateKey: string;
+  generatedAt: admin.firestore.Timestamp;
+  activeLearners: DailyActivityLearner[];
+  inactiveLearnerNames: string[];
+  totalApproved: number;
+  activeCount: number;
+}
+
+async function computeDailyActivityReport(dateKey: string): Promise<DailyActivityReport> {
+  // KST day boundaries in UTC
+  const [dateYear, dateMon, dateDay] = dateKey.split("-").map(Number);
+  const dayStartUtc = new Date(Date.UTC(dateYear, dateMon - 1, dateDay) - kstOffsetMs);
+  const dayEndUtc = new Date(dayStartUtc.getTime() + 24 * 60 * 60 * 1000 - 1);
+  const startTs = admin.firestore.Timestamp.fromDate(dayStartUtc);
+  const endTs = admin.firestore.Timestamp.fromDate(dayEndUtc);
+
+  // 1. Load all approved user profiles
+  const profileSnaps = await db.collection("user_profiles").get();
+  const approvedProfiles: Array<{uid: string; name: string; phone: string}> = [];
+  for (const doc of profileSnaps.docs) {
+    const d = doc.data();
+    if (d.status === "approved") {
+      approvedProfiles.push({
+        uid: doc.id,
+        name: (d.learnerName ?? d.displayName ?? d.name ?? "-").toString(),
+        phone: (d.learnerPhone ?? d.phoneNumber ?? d.phone ?? "-").toString(),
+      });
+    }
+  }
+
+  // 2. Load user_learning_summary for completed-session aggregates
+  const summarySnaps = await db.collection("user_learning_summary").get();
+  const summaryByUid = new Map<string, {durationSeconds: number; sessions: number}>();
+  for (const doc of summarySnaps.docs) {
+    const d = doc.data();
+    const daily = d.dailyStats?.[dateKey];
+    if (daily) {
+      summaryByUid.set(doc.id, {
+        durationSeconds: Number(daily.durationSeconds ?? 0),
+        sessions: Number(daily.sessions ?? 0),
+      });
+    }
+  }
+
+  // 3. Per-user: scan test_results + study_sessions
+  const activeLearners: DailyActivityLearner[] = [];
+  const inactiveLearnerNames: string[] = [];
+
+  for (const profile of approvedProfiles) {
+    const {uid, name, phone} = profile;
+
+    // Load all attempt docs for this user
+    let attemptSnaps;
+    try {
+      attemptSnaps = await db.collection(`test_results/${uid}/attempts`).get();
+    } catch {
+      attemptSnaps = {docs: []};
+    }
+
+    let daySessionIds = new Set<string>();
+    const evalsBySession = new Map<string, Date[]>();
+    let speakingItems = 0;
+    let totalItems = 0;
+    const simScores: number[] = [];
+
+    for (const attemptDoc of attemptSnaps.docs) {
+      const sid = attemptDoc.id;
+      let itemSnaps;
+      try {
+        itemSnaps = await db.collection(`test_results/${uid}/attempts/${sid}/items`).get();
+      } catch {
+        continue;
+      }
+      for (const itemDoc of itemSnaps.docs) {
+        const d = itemDoc.data();
+        const evalAt = d.evaluatedAt as admin.firestore.Timestamp | undefined;
+        if (!evalAt || evalAt < startTs || evalAt > endTs) continue;
+        daySessionIds.add(sid);
+        totalItems++;
+        const evalDate = evalAt.toDate();
+        const prev = evalsBySession.get(sid) ?? [];
+        prev.push(evalDate);
+        evalsBySession.set(sid, prev);
+        const sim = d.similarityScore;
+        if (sim !== null && sim !== undefined) {
+          speakingItems++;
+          simScores.push(Number(sim));
+        }
+      }
+    }
+
+    // Session start times for the day
+    let sessionSnaps;
+    try {
+      sessionSnaps = await db.collection(`study_sessions/${uid}/sessions`)
+        .where("startedAt", ">=", startTs)
+        .where("startedAt", "<=", endTs)
+        .get();
+    } catch {
+      sessionSnaps = {docs: []};
+    }
+    const daySessionStarts = new Map<string, Date>();
+    for (const sDoc of sessionSnaps.docs) {
+      const d = sDoc.data();
+      const startedAt = d.startedAt as admin.firestore.Timestamp | undefined;
+      if (startedAt) {
+        daySessionIds.add(sDoc.id);
+        daySessionStarts.set(sDoc.id, startedAt.toDate());
+      }
+    }
+
+    const sessionCount = daySessionIds.size;
+    if (sessionCount === 0 && totalItems === 0) {
+      inactiveLearnerNames.push(name);
+      continue;
+    }
+
+    // Duration calculation
+    const summary = summaryByUid.get(uid);
+    let durationSeconds: number;
+    let durationSource: "completed" | "proxy" | "none";
+
+    if (summary && summary.durationSeconds > 0) {
+      durationSeconds = summary.durationSeconds;
+      durationSource = "completed";
+    } else if (evalsBySession.size > 0) {
+      let total = 0;
+      for (const [sid, evalTimes] of evalsBySession) {
+        const lastEval = new Date(Math.max(...evalTimes.map((t) => t.getTime())));
+        const sessionStart = daySessionStarts.get(sid);
+        if (sessionStart) {
+          const span = Math.min((lastEval.getTime() - sessionStart.getTime()) / 1000, 90 * 60);
+          total += Math.max(span, 30);
+        } else {
+          total += 30;
+        }
+      }
+      durationSeconds = Math.round(total);
+      durationSource = "proxy";
+    } else {
+      durationSeconds = 0;
+      durationSource = "none";
+    }
+
+    const avgSimilarity = simScores.length > 0
+      ? Math.round(simScores.reduce((a, b) => a + b, 0) / simScores.length)
+      : null;
+
+    activeLearners.push({
+      uid,
+      name,
+      phone,
+      durationSeconds,
+      durationSource,
+      sessionCount,
+      totalItems,
+      speakingItems,
+      avgSimilarity,
+    });
+  }
+
+  inactiveLearnerNames.sort((a, b) => a.localeCompare(b, "ko"));
+  activeLearners.sort((a, b) => b.durationSeconds - a.durationSeconds);
+
+  return {
+    dateKey,
+    generatedAt: admin.firestore.Timestamp.now(),
+    activeLearners,
+    inactiveLearnerNames,
+    totalApproved: approvedProfiles.length,
+    activeCount: activeLearners.length,
+  };
+}
+
+function fmtDur(seconds: number): string {
+  if (seconds <= 0) return "-";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}시간 ${m}분 ${s}초`;
+  if (m > 0) return `${m}분 ${s}초`;
+  return `${s}초`;
+}
+
+function buildDailyReportTelegramText(report: DailyActivityReport): string {
+  const {dateKey, activeLearners, inactiveLearnerNames, totalApproved, activeCount} = report;
+  const lines: string[] = [];
+  lines.push(`📊 ${dateKey} 학습 활동 보고 (KST 기준)`);
+  lines.push(`생성 시각: ${formatKstDateTime(report.generatedAt)}`);
+  lines.push(`활동: ${activeCount}명 / 미활동: ${inactiveLearnerNames.length}명 (전체 ${totalApproved}명)`);
+
+  const byDuration = [...activeLearners].sort((a, b) => b.durationSeconds - a.durationSeconds);
+  if (byDuration.length > 0) {
+    lines.push("");
+    lines.push("[학습시간 상위 3명]");
+    byDuration.slice(0, 3).forEach((l, i) => {
+      const approx = l.durationSource === "proxy" ? "~" : "";
+      lines.push(`${i + 1}위 ${l.name}: ${approx}${fmtDur(l.durationSeconds)} (${l.sessionCount}회)`);
+    });
+  }
+
+  const bySessions = [...activeLearners].sort((a, b) => b.sessionCount - a.sessionCount);
+  if (bySessions.length > 0) {
+    lines.push("");
+    lines.push("[세션 수 상위 3명]");
+    bySessions.slice(0, 3).forEach((l, i) => {
+      lines.push(`${i + 1}위 ${l.name}: ${l.sessionCount}회 (말하기 ${l.speakingItems}건)`);
+    });
+  }
+
+  const withSim = activeLearners.filter((l) => l.avgSimilarity !== null);
+  withSim.sort((a, b) => (b.avgSimilarity ?? 0) - (a.avgSimilarity ?? 0));
+  if (withSim.length > 0) {
+    lines.push("");
+    lines.push("[발음 유사도 상위 3명]");
+    withSim.slice(0, 3).forEach((l, i) => {
+      lines.push(`${i + 1}위 ${l.name}: ${l.avgSimilarity}% (${l.speakingItems}건)`);
+    });
+  }
+
+  if (inactiveLearnerNames.length > 0) {
+    lines.push("");
+    lines.push(`[미활동 ${inactiveLearnerNames.length}명]`);
+    lines.push(inactiveLearnerNames.join(", "));
+  }
+
+  return lines.join("\n");
+}
+
+export const generateDailyActivityReport = onSchedule(
+  {
+    schedule: "20 6 * * *",
+    timeZone: "Asia/Seoul",
+    region: "asia-northeast3",
+    memory: "512MiB",
+    timeoutSeconds: 300,
+  },
+  async () => {
+    // Report covers yesterday in KST (this runs at 6:20 AM KST)
+    const nowKst = new Date(Date.now() + kstOffsetMs);
+    const yesterday = new Date(nowKst.getTime() - 24 * 60 * 60 * 1000);
+    const dateKey = formatUtcDateKey(yesterday);
+
+    console.log(`Generating daily activity report for ${dateKey}`);
+    const report = await computeDailyActivityReport(dateKey);
+
+    await db.doc(`daily_activity_reports/${dateKey}`).set(report);
+
+    const text = buildDailyReportTelegramText(report);
+    await sendTelegramAdminMessage(text, {channel: "daily_activity_report", dateKey});
+    console.log(`Daily activity report for ${dateKey} done: ${report.activeCount}/${report.totalApproved} active`);
+  },
+);
+
+interface GetDailyActivityReportData {
+  adminUserId: string;
+  dateKey?: string;
+}
+
+export const getDailyActivityReport = onCall<GetDailyActivityReportData>(
+  callableOptions,
+  async (request) => {
+    const adminUserId = ensureString(request.data?.adminUserId, "adminUserId");
+    await requireAdminUser(request.auth?.uid, request.auth?.token, adminUserId);
+
+    const dateKey = resolveDateKey(request.data?.dateKey);
+    const snap = await db.doc(`daily_activity_reports/${dateKey}`).get();
+    if (!snap.exists) {
+      return {exists: false, dateKey, report: null};
+    }
+    const data = snap.data() as DailyActivityReport;
+    return {
+      exists: true,
+      dateKey,
+      report: {
+        dateKey: data.dateKey,
+        generatedAt: (data.generatedAt as admin.firestore.Timestamp).toDate().toISOString(),
+        generatedAtKst: formatKstDateTime(data.generatedAt as admin.firestore.Timestamp),
+        activeLearners: data.activeLearners,
+        inactiveLearnerNames: data.inactiveLearnerNames,
+        totalApproved: data.totalApproved,
+        activeCount: data.activeCount,
+      },
+    };
+  },
+);
+
+interface GenerateDailyActivityReportForDateData {
+  adminUserId: string;
+  dateKey?: string;
+}
+
+export const generateDailyActivityReportForDate = onCall<GenerateDailyActivityReportForDateData>(
+  {
+    ...callableOptions,
+    memory: "512MiB",
+    timeoutSeconds: 300,
+  },
+  async (request) => {
+    const adminUserId = ensureString(request.data?.adminUserId, "adminUserId");
+    await requireAdminUser(request.auth?.uid, request.auth?.token, adminUserId);
+
+    const dateKey = resolveDateKey(request.data?.dateKey);
+    const report = await computeDailyActivityReport(dateKey);
+    await db.doc(`daily_activity_reports/${dateKey}`).set(report);
+
+    return {
+      dateKey,
+      generatedAt: report.generatedAt.toDate().toISOString(),
+      generatedAtKst: formatKstDateTime(report.generatedAt),
+      activeLearners: report.activeLearners,
+      inactiveLearnerNames: report.inactiveLearnerNames,
+      totalApproved: report.totalApproved,
+      activeCount: report.activeCount,
+    };
   },
 );

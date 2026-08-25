@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +10,7 @@ import '../../../../core/firebase/firebase_providers.dart';
 import '../../../../core/firebase/firebase_services.dart';
 import '../../../../core/widgets/app_section_card.dart';
 import '../../../../core/widgets/app_status_banner.dart';
+import '../../../learning_content/data/thai_learning_content.dart';
 import '../../../learning_select/data/today_link_repository.dart';
 
 enum _DashboardDetail {
@@ -166,6 +169,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 ],
                 const _TodayLinkAdminSection(),
                 const SizedBox(height: 16),
+                const _SimilarityEventSection(),
+                const SizedBox(height: 16),
+                const _DailyActivityReportSection(),
+                const SizedBox(height: 16),
                 const _Thai25DayBulkSeedSection(),
                 const SizedBox(height: 16),
                 _SummarySection(
@@ -190,7 +197,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 _RecentReportsSection(reports: data.recentReports),
                 const SizedBox(height: 24),
                 Text(
-                  '생성 시각: ${data.generatedAt}',
+                  '생성 시각: ${_toKstDisplay(data.generatedAt)}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -216,13 +223,29 @@ class _TodayLinkAdminSectionState
   final _urlController = TextEditingController();
   bool _loading = true;
   bool _saving = false;
+  bool _loadingStats = false;
   String? _message;
   bool _messageIsError = false;
+  DateTime? _selectedDate; // null = today KST
+  TodayLinkClicks? _clickStats;
+
+  String get _dateKey {
+    final kst = DateTime.now().toUtc().add(const Duration(hours: 9));
+    final d = _selectedDate ?? kst;
+    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
+  bool get _isToday {
+    if (_selectedDate == null) return true;
+    final kst = DateTime.now().toUtc().add(const Duration(hours: 9));
+    final d = _selectedDate!;
+    return d.year == kst.year && d.month == kst.month && d.day == kst.day;
+  }
 
   @override
   void initState() {
     super.initState();
-    _loadExisting();
+    _loadAll();
   }
 
   @override
@@ -232,116 +255,904 @@ class _TodayLinkAdminSectionState
     super.dispose();
   }
 
+  Future<void> _pickDate() async {
+    final kst = DateTime.now().toUtc().add(const Duration(hours: 9));
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? kst,
+      firstDate: DateTime(2026, 1, 1),
+      lastDate: DateTime(kst.year + 1, 12, 31),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _selectedDate = picked;
+      _loading = true;
+      _clickStats = null;
+      _message = null;
+    });
+    _loadAll();
+  }
+
+  void _resetToToday() {
+    setState(() {
+      _selectedDate = null;
+      _loading = true;
+      _clickStats = null;
+      _message = null;
+    });
+    _loadAll();
+  }
+
+  Future<void> _loadAll() async {
+    await Future.wait([_loadExisting(), _loadClickStats()]);
+  }
+
   Future<void> _loadExisting() async {
     try {
-      final link = await ref.read(todayLinkRepositoryProvider).getTodayLink();
-      if (!mounted) {
-        return;
-      }
+      final link = await ref
+          .read(todayLinkRepositoryProvider)
+          .getTodayLink(dateKey: _dateKey);
+      if (!mounted) return;
       setState(() {
         _titleController.text = link.title ?? '';
         _urlController.text = link.url ?? '';
         _loading = false;
       });
     } catch (_) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _loadClickStats() async {
+    final user = ref.read(authStateChangesProvider).asData?.value;
+    if (user == null) return;
+    setState(() => _loadingStats = true);
+    try {
+      final stats = await ref
+          .read(todayLinkRepositoryProvider)
+          .getTodayLinkClicks(adminUserId: user.uid, dateKey: _dateKey);
+      if (!mounted) return;
+      setState(() {
+        _clickStats = stats;
+        _loadingStats = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingStats = false);
     }
   }
 
   Future<void> _save() async {
     final user = ref.read(authStateChangesProvider).asData?.value;
-    if (user == null) {
-      return;
-    }
+    if (user == null) return;
 
     setState(() {
       _saving = true;
       _message = null;
     });
     try {
-      await ref.read(todayLinkRepositoryProvider).setTodayLink(
-        adminUserId: user.uid,
-        url: _urlController.text.trim(),
-        title: _titleController.text.trim(),
-      );
-      if (!mounted) {
-        return;
-      }
+      await ref
+          .read(todayLinkRepositoryProvider)
+          .setTodayLink(
+            adminUserId: user.uid,
+            url: _urlController.text.trim(),
+            title: _titleController.text.trim(),
+            dateKey: _dateKey,
+          );
+      if (!mounted) return;
       setState(() {
-        _message = '오늘의 링크를 저장했습니다.';
+        _message = '$_dateKey 링크를 저장했습니다.';
         _messageIsError = false;
       });
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       setState(() {
         _message = _todayLinkErrorMessage(error);
         _messageIsError = true;
       });
     } finally {
-      if (mounted) {
-        setState(() => _saving = false);
-      }
+      if (mounted) setState(() => _saving = false);
     }
   }
 
   String _todayLinkErrorMessage(Object error) {
-    if (error is FirebaseFunctionsException && error.code == 'invalid-argument') {
-      return '제목과 URL을 올바르게 입력했는지 확인해 주세요. URL은 http:// 또는 https://로 시작해야 합니다.';
+    if (error is FirebaseFunctionsException &&
+        error.code == 'invalid-argument') {
+      return '제목과 URL을 올바르게 입력해 주세요. URL은 http:// 또는 https://로 시작해야 합니다.';
     }
     return toUserFacingErrorMessage(error);
   }
 
   @override
   Widget build(BuildContext context) {
+    final stats = _clickStats;
     return AppSectionCard(
-      title: '오늘의 링크 관리',
-      description: '학습자가 "오늘의 학습과 복습"을 누르면 열리는 외부 페이지 링크를 등록합니다.',
+      title: '링크 관리',
+      description: '학습자가 "오늘의 학습과 복습"을 누르면 열리는 외부 페이지 링크를 날짜별로 등록합니다.',
       icon: Icons.link,
-      child: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextField(
-                  controller: _titleController,
-                  decoration: const InputDecoration(labelText: '제목'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _isToday ? '오늘 ($_dateKey)' : _dateKey,
+                  style: Theme.of(context).textTheme.titleSmall,
                 ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _urlController,
-                  decoration: const InputDecoration(
-                    labelText: 'URL',
-                    hintText: 'https://...',
-                  ),
-                  keyboardType: TextInputType.url,
-                ),
-                const SizedBox(height: 12),
-                if (_message != null) ...[
-                  AppStatusBanner(
-                    isError: _messageIsError,
-                    icon: _messageIsError
-                        ? Icons.error_outline
-                        : Icons.check_circle_outline,
-                    message: _message!,
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton(
-                    onPressed: _saving ? null : _save,
-                    child: Text(_saving ? '저장 중...' : '오늘의 링크 저장'),
-                  ),
-                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _pickDate,
+                icon: const Icon(Icons.calendar_today_outlined, size: 16),
+                label: const Text('날짜 선택'),
+              ),
+              if (!_isToday) ...[
+                const SizedBox(width: 8),
+                TextButton(onPressed: _resetToToday, child: const Text('오늘로')),
               ],
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (_loadingStats)
+            const LinearProgressIndicator()
+          else if (stats != null)
+            Chip(
+              avatar: const Icon(Icons.touch_app, size: 16),
+              label: Text(
+                '학습자 ${stats.totalLearners}명 접속 / 총 ${stats.totalClicks}회 클릭',
+              ),
             ),
+          const SizedBox(height: 8),
+          if (_loading)
+            const Center(child: CircularProgressIndicator())
+          else ...[
+            TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(labelText: '제목'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _urlController,
+              decoration: const InputDecoration(
+                labelText: 'URL',
+                hintText: 'https://...',
+              ),
+              keyboardType: TextInputType.url,
+            ),
+            const SizedBox(height: 12),
+            if (_message != null) ...[
+              AppStatusBanner(
+                isError: _messageIsError,
+                icon: _messageIsError
+                    ? Icons.error_outline
+                    : Icons.check_circle_outline,
+                message: _message!,
+              ),
+              const SizedBox(height: 12),
+            ],
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton(
+                onPressed: _saving ? null : _save,
+                child: Text(_saving ? '저장 중...' : '$_dateKey 링크 저장'),
+              ),
+            ),
+          ],
+          if (stats != null && stats.learners.isNotEmpty) ...[
+            const Divider(height: 24),
+            Text('접속 학습자', style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 4),
+            ...stats.learners.map(
+              (l) => _AdminListTile(
+                title: l.name,
+                subtitle: '${l.clickCount}회 클릭',
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
+}
+
+class _DailyActivityReportSection extends ConsumerStatefulWidget {
+  const _DailyActivityReportSection();
+
+  @override
+  ConsumerState<_DailyActivityReportSection> createState() =>
+      _DailyActivityReportSectionState();
+}
+
+class _DailyActivityReportSectionState
+    extends ConsumerState<_DailyActivityReportSection> {
+  bool _loading = false;
+  String? _message;
+  bool _messageIsError = false;
+  Map<String, dynamic>? _reportData;
+  String? _reportDateKey;
+  DateTime? _selectedDate; // null = yesterday KST
+
+  String get _selectedDateKey {
+    final kst = DateTime.now().toUtc().add(const Duration(hours: 9));
+    final d = _selectedDate ?? kst.subtract(const Duration(days: 1));
+    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _pickDate() async {
+    final kst = DateTime.now().toUtc().add(const Duration(hours: 9));
+    final yesterday = kst.subtract(const Duration(days: 1));
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? yesterday,
+      firstDate: DateTime(2026, 1, 1),
+      lastDate: kst,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _selectedDate = picked;
+      _reportData = null;
+      _message = null;
+    });
+  }
+
+  Future<void> _loadReport() async {
+    final user = ref.read(authStateChangesProvider).asData?.value;
+    if (user == null) return;
+    final dateKey = _selectedDateKey;
+
+    setState(() {
+      _loading = true;
+      _message = null;
+      _reportData = null;
+    });
+    try {
+      final result = await ref
+          .read(firebaseFunctionsProvider)
+          .httpsCallable('getDailyActivityReport')
+          .call<Map<String, dynamic>>(<String, dynamic>{
+            'adminUserId': user.uid,
+            'dateKey': dateKey,
+          });
+      final data = _asMap(result.data);
+      if (!(data['exists'] as bool? ?? false)) {
+        setState(() {
+          _message = '${data['dateKey'] ?? dateKey} 보고서가 아직 생성되지 않았습니다.';
+          _messageIsError = false;
+          _loading = false;
+        });
+        return;
+      }
+      setState(() {
+        _reportData = _asMap(data['report']);
+        _reportDateKey = (data['dateKey'] as String?) ?? dateKey;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _message = toUserFacingErrorMessage(error);
+        _messageIsError = true;
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _generateReport() async {
+    final user = ref.read(authStateChangesProvider).asData?.value;
+    if (user == null) return;
+    final dateKey = _selectedDateKey;
+
+    setState(() {
+      _loading = true;
+      _message = null;
+      _reportData = null;
+    });
+    try {
+      final result = await ref
+          .read(firebaseFunctionsProvider)
+          .httpsCallable('generateDailyActivityReportForDate')
+          .call<Map<String, dynamic>>(<String, dynamic>{
+            'adminUserId': user.uid,
+            'dateKey': dateKey,
+          });
+      final data = _asMap(result.data);
+      setState(() {
+        _reportData = data;
+        _reportDateKey = data['dateKey'] as String? ?? dateKey;
+        _message = '$dateKey 보고서가 생성되었습니다.';
+        _messageIsError = false;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _message = toUserFacingErrorMessage(error);
+        _messageIsError = true;
+        _loading = false;
+      });
+    }
+  }
+
+  String _fmtDuration(int seconds) {
+    if (seconds <= 0) return '-';
+    final h = seconds ~/ 3600;
+    final m = (seconds % 3600) ~/ 60;
+    final s = seconds % 60;
+    if (h > 0) return '$h시간 $m분 $s초';
+    if (m > 0) return '$m분 $s초';
+    return '$s초';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final report = _reportData;
+    return AppSectionCard(
+      title: '일별 학습 활동 현황',
+      description: '매일 06:20 자동 생성 또는 수동 생성.',
+      icon: Icons.bar_chart,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _selectedDateKey,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _loading ? null : _pickDate,
+                icon: const Icon(Icons.calendar_today_outlined, size: 16),
+                label: const Text('날짜 선택'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_message != null) ...[
+            AppStatusBanner(
+              isError: _messageIsError,
+              icon: _messageIsError ? Icons.error_outline : Icons.info_outline,
+              message: _message!,
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (_loading)
+            const Center(child: CircularProgressIndicator())
+          else if (report != null) ...[
+            Text(
+              '${_reportDateKey ?? ''} 보고서 — 활동 ${report['activeCount'] ?? 0}명 / 전체 ${report['totalApproved'] ?? 0}명',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            if ((report['generatedAtKst'] as String?)?.isNotEmpty ?? false) ...[
+              const SizedBox(height: 4),
+              Text(
+                '생성 시각: ${report['generatedAtKst']}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ] else if ((report['generatedAt'] as String?)?.isNotEmpty ??
+                false) ...[
+              const SizedBox(height: 4),
+              Text(
+                '생성 시각: ${_toKstDisplay(report['generatedAt'] as String?)}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+            const SizedBox(height: 8),
+            _buildTopLearners(context, report),
+            const SizedBox(height: 8),
+            _buildInactive(context, report),
+          ],
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _loading ? null : _loadReport,
+                icon: const Icon(Icons.download_outlined),
+                label: Text('$_selectedDateKey 보고서 불러오기'),
+              ),
+              FilledButton.icon(
+                onPressed: _loading ? null : _generateReport,
+                icon: const Icon(Icons.refresh),
+                label: Text('$_selectedDateKey 보고서 재생성'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopLearners(BuildContext context, Map<String, dynamic> report) {
+    final learners = (report['activeLearners'] as List<dynamic>? ?? [])
+        .map((e) => _asMap(e))
+        .toList();
+    if (learners.isEmpty) {
+      return const Text('활동한 학습자 없음');
+    }
+    final byDuration = [...learners]
+      ..sort(
+        (a, b) => ((b['durationSeconds'] as num?) ?? 0).compareTo(
+          (a['durationSeconds'] as num?) ?? 0,
+        ),
+      );
+    final bySession = [...learners]
+      ..sort(
+        (a, b) => ((b['sessionCount'] as num?) ?? 0).compareTo(
+          (a['sessionCount'] as num?) ?? 0,
+        ),
+      );
+    final withSim = learners.where((l) => l['avgSimilarity'] != null).toList()
+      ..sort(
+        (a, b) => ((b['avgSimilarity'] as num?) ?? 0).compareTo(
+          (a['avgSimilarity'] as num?) ?? 0,
+        ),
+      );
+
+    final rows = <Widget>[];
+
+    void addTop(
+      String label,
+      List<Map<String, dynamic>> list,
+      String Function(Map<String, dynamic>) detail,
+    ) {
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.only(top: 8, bottom: 4),
+          child: Text(label, style: Theme.of(context).textTheme.labelLarge),
+        ),
+      );
+      for (final (i, l) in list.take(3).indexed) {
+        final approx = (l['durationSource'] as String?) == 'proxy' ? '~' : '';
+        rows.add(
+          _AdminListTile(
+            title: '${i + 1}위  ${l['name'] ?? '-'}  (${l['phone'] ?? '-'})',
+            subtitle: detail(l).replaceFirst('{approx}', approx),
+          ),
+        );
+      }
+    }
+
+    addTop(
+      '학습 시간 상위',
+      byDuration,
+      (l) =>
+          '{approx}${_fmtDuration((l['durationSeconds'] as num?)?.toInt() ?? 0)}  |  세션 ${l['sessionCount'] ?? 0}회',
+    );
+    addTop(
+      '세션 수 상위',
+      bySession,
+      (l) => '${l['sessionCount'] ?? 0}회  |  말하기 ${l['speakingItems'] ?? 0}건',
+    );
+    if (withSim.isNotEmpty) {
+      addTop(
+        '발음 유사도 상위',
+        withSim,
+        (l) =>
+            '${l['avgSimilarity'] ?? 0}%  |  말하기 ${l['speakingItems'] ?? 0}건',
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
+    );
+  }
+
+  Widget _buildInactive(BuildContext context, Map<String, dynamic> report) {
+    final names = (report['inactiveLearnerNames'] as List<dynamic>? ?? [])
+        .map((e) => e.toString())
+        .toList();
+    if (names.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 8, bottom: 4),
+          child: Text(
+            '미활동 ${names.length}명',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+        ),
+        Text(names.join(' · '), style: Theme.of(context).textTheme.bodySmall),
+      ],
+    );
+  }
+}
+
+class _SimilarityEventSection extends ConsumerStatefulWidget {
+  const _SimilarityEventSection();
+
+  @override
+  ConsumerState<_SimilarityEventSection> createState() =>
+      _SimilarityEventSectionState();
+}
+
+class _SimilarityEventSectionState
+    extends ConsumerState<_SimilarityEventSection> {
+  static const _refreshInterval = Duration(seconds: 5);
+  Timer? _timer;
+  bool _loading = false;
+  bool _saving = false;
+  String? _message;
+  bool _messageIsError = false;
+  _SimilarityEventDashboard? _dashboard;
+  ThaiSentenceContent _selectedSentence = thaiSentenceContents.first;
+
+  String get _selectedContentSetId =>
+      '${_selectedSentence.category}-beginner-default';
+
+  ThaiSentenceContent get _displaySentence {
+    final event = _dashboard?.event;
+    if (event?.status != 'active') return _selectedSentence;
+    final eventItemId = event?.itemId ?? '';
+    if (eventItemId.isEmpty) return _selectedSentence;
+    for (final sentence in thaiSentenceContents) {
+      if (sentence.id == eventItemId) return sentence;
+    }
+    return _selectedSentence;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _syncTimer() {
+    final active = _dashboard?.event?.status == 'active';
+    if (!active) {
+      _timer?.cancel();
+      _timer = null;
+      return;
+    }
+    _timer ??= Timer.periodic(_refreshInterval, (_) => _load(silent: true));
+  }
+
+  Future<void> _load({bool silent = false}) async {
+    final user = ref.read(authStateChangesProvider).asData?.value;
+    if (user == null) return;
+    if (!silent) {
+      setState(() {
+        _loading = true;
+        _message = null;
+      });
+    }
+    try {
+      final result = await ref
+          .read(firebaseFunctionsProvider)
+          .httpsCallable('getSimilarityEventDashboard')
+          .call<Map<String, dynamic>>(<String, dynamic>{
+            'adminUserId': user.uid,
+          });
+      if (!mounted) return;
+      setState(() {
+        _dashboard = _SimilarityEventDashboard.fromMap(_asMap(result.data));
+        _loading = false;
+      });
+      _syncTimer();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _message = toUserFacingErrorMessage(error);
+        _messageIsError = true;
+        _loading = false;
+      });
+      _syncTimer();
+    }
+  }
+
+  Future<void> _start() async {
+    final user = ref.read(authStateChangesProvider).asData?.value;
+    if (user == null) return;
+    setState(() {
+      _saving = true;
+      _message = null;
+    });
+    try {
+      final result = await ref
+          .read(firebaseFunctionsProvider)
+          .httpsCallable('startSimilarityEvent')
+          .call<Map<String, dynamic>>(<String, dynamic>{
+            'adminUserId': user.uid,
+            'contentSetId': _selectedContentSetId,
+            'itemId': _selectedSentence.id,
+          });
+      if (!mounted) return;
+      setState(() {
+        _dashboard = _SimilarityEventDashboard.fromMap(_asMap(result.data));
+        _message = '유사도 시상 이벤트를 시작했습니다.';
+        _messageIsError = false;
+        _saving = false;
+      });
+      _syncTimer();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _message = toUserFacingErrorMessage(error);
+        _messageIsError = true;
+        _saving = false;
+      });
+    }
+  }
+
+  Future<void> _end() async {
+    final user = ref.read(authStateChangesProvider).asData?.value;
+    final eventId = _dashboard?.event?.eventId;
+    if (user == null || eventId == null || eventId.isEmpty) return;
+    setState(() {
+      _saving = true;
+      _message = null;
+    });
+    try {
+      final result = await ref
+          .read(firebaseFunctionsProvider)
+          .httpsCallable('endSimilarityEvent')
+          .call<Map<String, dynamic>>(<String, dynamic>{
+            'adminUserId': user.uid,
+            'eventId': eventId,
+          });
+      if (!mounted) return;
+      setState(() {
+        _dashboard = _SimilarityEventDashboard.fromMap(_asMap(result.data));
+        _message = '유사도 시상 이벤트를 종료했습니다.';
+        _messageIsError = false;
+        _saving = false;
+      });
+      _syncTimer();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _message = toUserFacingErrorMessage(error);
+        _messageIsError = true;
+        _saving = false;
+      });
+    }
+  }
+
+  Future<void> _selectSentence() async {
+    final selected = await showModalBottomSheet<ThaiSentenceContent>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: ListView.separated(
+          shrinkWrap: true,
+          itemCount: thaiSentenceContents.length,
+          separatorBuilder: (context, index) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final sentence = thaiSentenceContents[index];
+            return ListTile(
+              selected: sentence.id == _selectedSentence.id,
+              title: Text(
+                sentence.koreanText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: sentence.hangulPronunciation.isEmpty
+                  ? null
+                  : Text(
+                      sentence.hangulPronunciation,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+              onTap: () => Navigator.of(context).pop(sentence),
+            );
+          },
+        ),
+      ),
+    );
+    if (!mounted || selected == null) return;
+    setState(() => _selectedSentence = selected);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dashboard = _dashboard;
+    final event = dashboard?.event;
+    final active = event?.status == 'active';
+    final selectionDisabled = active || _saving;
+    final displaySentence = _displaySentence;
+    return AppSectionCard(
+      title: '유사도 시상 이벤트',
+      description:
+          '강사가 문장을 지정해 시작하면, 서버 우선/폰 전용 말하기 결과가 클라우드 저장 시 이벤트에 자동 집계됩니다.',
+      icon: Icons.emoji_events_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: selectionDisabled ? null : _selectSentence,
+            borderRadius: BorderRadius.circular(8),
+            child: InputDecorator(
+              decoration: InputDecoration(
+                labelText: '시상 문장',
+                enabled: !selectionDisabled,
+                border: const OutlineInputBorder(),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      displaySentence.koreanText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_drop_down),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('한글 발음 표기', style: Theme.of(context).textTheme.labelLarge),
+              const SizedBox(height: 2),
+              Text(
+                displaySentence.hangulPronunciation.isEmpty
+                    ? displaySentence.koreanText
+                    : displaySentence.hangulPronunciation,
+                softWrap: true,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.icon(
+                onPressed: active || _saving ? null : _start,
+                icon: const Icon(Icons.play_arrow),
+                label: Text(_saving && !active ? '시작 중...' : '이벤트 시작'),
+              ),
+              OutlinedButton.icon(
+                onPressed: !active || _saving ? null : _end,
+                icon: const Icon(Icons.stop),
+                label: Text(_saving && active ? '종료 중...' : '이벤트 종료'),
+              ),
+              OutlinedButton.icon(
+                onPressed: _loading ? null : () => _load(),
+                icon: const Icon(Icons.refresh),
+                label: Text(active ? '수동 새로고침' : '결과 불러오기'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            active
+                ? '진행 중: ${_refreshInterval.inSeconds}초마다 자동 새로고침'
+                : '대기 중: 이벤트 시작 후 자동 새로고침',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          if (_message != null) ...[
+            const SizedBox(height: 12),
+            AppStatusBanner(
+              isError: _messageIsError,
+              icon: _messageIsError ? Icons.error_outline : Icons.info_outline,
+              message: _message!,
+            ),
+          ],
+          const Divider(height: 24),
+          if (_loading && dashboard == null)
+            const Center(child: CircularProgressIndicator())
+          else if (dashboard == null || event == null)
+            const Text('아직 생성된 유사도 시상 이벤트가 없습니다.')
+          else
+            _SimilarityEventRankings(dashboard: dashboard),
+        ],
+      ),
+    );
+  }
+}
+
+class _SimilarityEventRankings extends StatelessWidget {
+  const _SimilarityEventRankings({required this.dashboard});
+
+  final _SimilarityEventDashboard dashboard;
+
+  @override
+  Widget build(BuildContext context) {
+    final event = dashboard.event!;
+    final rankings = dashboard.rankings;
+    final averageRankings = dashboard.averageRankings;
+    final reportRankings = dashboard.reportRankings;
+    final sentence = _sentenceContentById(event.itemId);
+    final sentenceTitle = sentence?.koreanText ?? '선택한 문장';
+    final sentencePronunciation = sentence?.hangulPronunciation ?? '';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _InlineMetrics(
+          items: [
+            ('상태', event.status == 'active' ? '진행 중' : '종료'),
+            ('문장', sentenceTitle),
+            ('문장 참여', '${dashboard.totalLearners}명'),
+            ('문장 보고', '${dashboard.totalAttempts}건'),
+            ('평균 참여', '${dashboard.averageTotalLearners}명'),
+            ('전체 보고', '${dashboard.averageTotalAttempts}건'),
+            ('리포트 참여', '${dashboard.reportTotalLearners}명'),
+            ('리포트 수', '${dashboard.reportTotalReports}건'),
+            ('시작', _toKstDisplay(event.startedAt)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(sentenceTitle, style: Theme.of(context).textTheme.titleMedium),
+        if (sentencePronunciation.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            sentencePronunciation,
+            softWrap: true,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+        const SizedBox(height: 8),
+        Text('시상 문장 최고점 TOP 5', style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: 6),
+        if (rankings.isEmpty)
+          const Text('아직 시상 문장 유사도 결과가 없습니다.')
+        else
+          for (final (index, ranking) in rankings.indexed)
+            _AdminListTile(
+              title: '${index + 1}위  ${ranking.learnerName}',
+              subtitle:
+                  '최고 점수 ${ranking.similarityScore}% / ${ranking.passed ? '통과' : '재시도 필요'} / ${ranking.sourceLabel}\n'
+                  '전화: ${ranking.learnerPhone} / 제출: ${ranking.evaluatedAtKst}',
+            ),
+        const SizedBox(height: 16),
+        Text(
+          '접수 기간 종합 평균 TOP 5',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 6),
+        if (averageRankings.isEmpty)
+          const Text('아직 접수 기간 평균을 계산할 유사도 결과가 없습니다.')
+        else
+          for (final (index, ranking) in averageRankings.indexed)
+            _AdminListTile(
+              title: '${index + 1}위  ${ranking.learnerName}',
+              subtitle:
+                  '평균 ${ranking.averageSimilarity}% / 보고 ${ranking.attemptCount}건\n'
+                  '전화: ${ranking.learnerPhone} / 최근 제출: ${ranking.latestEvaluatedAtKst}',
+            ),
+        const SizedBox(height: 16),
+        Text(
+          '리포트 기준 전체 유사도 평균 TOP 10',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 6),
+        if (reportRankings.isEmpty)
+          const Text('이벤트 기간 중 제출된 리포트가 없습니다.')
+        else
+          for (final (index, ranking) in reportRankings.indexed)
+            _AdminListTile(
+              title: '${index + 1}위  ${ranking.learnerName}',
+              subtitle:
+                  '평균 ${ranking.averageSimilarity}% / 리포트 ${ranking.reportCount}건\n'
+                  '전화: ${ranking.learnerPhone} / 최근 리포트: ${ranking.latestSubmittedAtKst}',
+            ),
+      ],
+    );
+  }
+}
+
+ThaiSentenceContent? _sentenceContentById(String itemId) {
+  for (final sentence in thaiSentenceContents) {
+    if (sentence.id == itemId) return sentence;
+  }
+  return null;
 }
 
 /// One-time bulk seed for the "태국어 25일 일별 학습계획" curriculum: weekday-only
@@ -351,31 +1162,131 @@ class _TodayLinkAdminSectionState
 /// above — no new backend/schema. Safe to leave in place; re-running just
 /// overwrites the same 25 dates with the same data (merge:true).
 const _thai25DayPlan = <({String dateKey, String title, String url})>[
-  (dateKey: '2026-06-29', title: '1일차 첫 인사 시작하기', url: 'https://xhpark.github.io/Thai_25day/?day=1'),
-  (dateKey: '2026-06-30', title: '2일차 시간대 인사 익히기', url: 'https://xhpark.github.io/Thai_25day/?day=2'),
-  (dateKey: '2026-07-01', title: '3일차 감사와 응답', url: 'https://xhpark.github.io/Thai_25day/?day=3'),
-  (dateKey: '2026-07-02', title: '4일차 짧게 대답하기', url: 'https://xhpark.github.io/Thai_25day/?day=4'),
-  (dateKey: '2026-07-03', title: '5일차 예수님 믿으세요', url: 'https://xhpark.github.io/Thai_25day/?day=5'),
-  (dateKey: '2026-07-06', title: '6일차 정중하게 말 걸기', url: 'https://xhpark.github.io/Thai_25day/?day=6'),
-  (dateKey: '2026-07-07', title: '7일차 이름 묻기', url: 'https://xhpark.github.io/Thai_25day/?day=7'),
-  (dateKey: '2026-07-08', title: '8일차 자기소개하기', url: 'https://xhpark.github.io/Thai_25day/?day=8'),
-  (dateKey: '2026-07-09', title: '9일차 나이 묻기', url: 'https://xhpark.github.io/Thai_25day/?day=9'),
-  (dateKey: '2026-07-10', title: '10일차 우리는 당신들을 사랑해요', url: 'https://xhpark.github.io/Thai_25day/?day=10'),
-  (dateKey: '2026-07-13', title: '11일차 화장실 묻기', url: 'https://xhpark.github.io/Thai_25day/?day=11'),
-  (dateKey: '2026-07-14', title: '12일차 식사 대화', url: 'https://xhpark.github.io/Thai_25day/?day=12'),
-  (dateKey: '2026-07-15', title: '13일차 격려하기', url: 'https://xhpark.github.io/Thai_25day/?day=13'),
-  (dateKey: '2026-07-16', title: '14일차 작별 인사', url: 'https://xhpark.github.io/Thai_25day/?day=14'),
-  (dateKey: '2026-07-17', title: '15일차 기도해 드릴게요', url: 'https://xhpark.github.io/Thai_25day/?day=15'),
-  (dateKey: '2026-07-20', title: '16일차 예수님의 사랑 전하기', url: 'https://xhpark.github.io/Thai_25day/?day=16'),
-  (dateKey: '2026-07-21', title: '17일차 하나님의 사랑 전하기', url: 'https://xhpark.github.io/Thai_25day/?day=17'),
-  (dateKey: '2026-07-22', title: '18일차 축복하기', url: 'https://xhpark.github.io/Thai_25day/?day=18'),
-  (dateKey: '2026-07-23', title: '19일차 하나님은 사랑이십니다', url: 'https://xhpark.github.io/Thai_25day/?day=19'),
-  (dateKey: '2026-07-24', title: '20일차 함께 찬양해요', url: 'https://xhpark.github.io/Thai_25day/?day=20'),
-  (dateKey: '2026-07-27', title: '21일차 인사와 감사 전체 복습', url: 'https://xhpark.github.io/Thai_25day/?day=21'),
-  (dateKey: '2026-07-28', title: '22일차 새 친구와 자기소개 복습', url: 'https://xhpark.github.io/Thai_25day/?day=22'),
-  (dateKey: '2026-07-29', title: '23일차 생활 대화와 돌봄 복습', url: 'https://xhpark.github.io/Thai_25day/?day=23'),
-  (dateKey: '2026-07-30', title: '24일차 사랑·축복·믿음·찬양 복습', url: 'https://xhpark.github.io/Thai_25day/?day=24'),
-  (dateKey: '2026-07-31', title: '25일차 전체 24문장 종합 리허설', url: 'https://xhpark.github.io/Thai_25day/?day=25'),
+  (
+    dateKey: '2026-06-29',
+    title: '1일차 첫 인사 시작하기',
+    url: 'https://xhpark.github.io/Thai_25day/?day=1',
+  ),
+  (
+    dateKey: '2026-06-30',
+    title: '2일차 시간대 인사 익히기',
+    url: 'https://xhpark.github.io/Thai_25day/?day=2',
+  ),
+  (
+    dateKey: '2026-07-01',
+    title: '3일차 감사와 응답',
+    url: 'https://xhpark.github.io/Thai_25day/?day=3',
+  ),
+  (
+    dateKey: '2026-07-02',
+    title: '4일차 짧게 대답하기',
+    url: 'https://xhpark.github.io/Thai_25day/?day=4',
+  ),
+  (
+    dateKey: '2026-07-03',
+    title: '5일차 예수님 믿으세요',
+    url: 'https://xhpark.github.io/Thai_25day/?day=5',
+  ),
+  (
+    dateKey: '2026-07-06',
+    title: '6일차 정중하게 말 걸기',
+    url: 'https://xhpark.github.io/Thai_25day/?day=6',
+  ),
+  (
+    dateKey: '2026-07-07',
+    title: '7일차 이름 묻기',
+    url: 'https://xhpark.github.io/Thai_25day/?day=7',
+  ),
+  (
+    dateKey: '2026-07-08',
+    title: '8일차 자기소개하기',
+    url: 'https://xhpark.github.io/Thai_25day/?day=8',
+  ),
+  (
+    dateKey: '2026-07-09',
+    title: '9일차 나이 묻기',
+    url: 'https://xhpark.github.io/Thai_25day/?day=9',
+  ),
+  (
+    dateKey: '2026-07-10',
+    title: '10일차 우리는 당신들을 사랑해요',
+    url: 'https://xhpark.github.io/Thai_25day/?day=10',
+  ),
+  (
+    dateKey: '2026-07-13',
+    title: '11일차 화장실 묻기',
+    url: 'https://xhpark.github.io/Thai_25day/?day=11',
+  ),
+  (
+    dateKey: '2026-07-14',
+    title: '12일차 식사 대화',
+    url: 'https://xhpark.github.io/Thai_25day/?day=12',
+  ),
+  (
+    dateKey: '2026-07-15',
+    title: '13일차 격려하기',
+    url: 'https://xhpark.github.io/Thai_25day/?day=13',
+  ),
+  (
+    dateKey: '2026-07-16',
+    title: '14일차 작별 인사',
+    url: 'https://xhpark.github.io/Thai_25day/?day=14',
+  ),
+  (
+    dateKey: '2026-07-17',
+    title: '15일차 기도해 드릴게요',
+    url: 'https://xhpark.github.io/Thai_25day/?day=15',
+  ),
+  (
+    dateKey: '2026-07-20',
+    title: '16일차 예수님의 사랑 전하기',
+    url: 'https://xhpark.github.io/Thai_25day/?day=16',
+  ),
+  (
+    dateKey: '2026-07-21',
+    title: '17일차 하나님의 사랑 전하기',
+    url: 'https://xhpark.github.io/Thai_25day/?day=17',
+  ),
+  (
+    dateKey: '2026-07-22',
+    title: '18일차 축복하기',
+    url: 'https://xhpark.github.io/Thai_25day/?day=18',
+  ),
+  (
+    dateKey: '2026-07-23',
+    title: '19일차 하나님은 사랑이십니다',
+    url: 'https://xhpark.github.io/Thai_25day/?day=19',
+  ),
+  (
+    dateKey: '2026-07-24',
+    title: '20일차 함께 찬양해요',
+    url: 'https://xhpark.github.io/Thai_25day/?day=20',
+  ),
+  (
+    dateKey: '2026-07-27',
+    title: '21일차 인사와 감사 전체 복습',
+    url: 'https://xhpark.github.io/Thai_25day/?day=21',
+  ),
+  (
+    dateKey: '2026-07-28',
+    title: '22일차 새 친구와 자기소개 복습',
+    url: 'https://xhpark.github.io/Thai_25day/?day=22',
+  ),
+  (
+    dateKey: '2026-07-29',
+    title: '23일차 생활 대화와 돌봄 복습',
+    url: 'https://xhpark.github.io/Thai_25day/?day=23',
+  ),
+  (
+    dateKey: '2026-07-30',
+    title: '24일차 사랑·축복·믿음·찬양 복습',
+    url: 'https://xhpark.github.io/Thai_25day/?day=24',
+  ),
+  (
+    dateKey: '2026-07-31',
+    title: '25일차 전체 24문장 종합 리허설',
+    url: 'https://xhpark.github.io/Thai_25day/?day=25',
+  ),
 ];
 
 class _Thai25DayBulkSeedSection extends ConsumerStatefulWidget {
@@ -432,12 +1343,14 @@ class _Thai25DayBulkSeedSectionState
     final failures = <String>[];
     for (final entry in _thai25DayPlan) {
       try {
-        await ref.read(todayLinkRepositoryProvider).setTodayLink(
-          adminUserId: user.uid,
-          url: entry.url,
-          title: entry.title,
-          dateKey: entry.dateKey,
-        );
+        await ref
+            .read(todayLinkRepositoryProvider)
+            .setTodayLink(
+              adminUserId: user.uid,
+              url: entry.url,
+              title: entry.title,
+              dateKey: entry.dateKey,
+            );
         successCount++;
       } catch (_) {
         failures.add(entry.dateKey);
@@ -508,6 +1421,7 @@ class _SummarySection extends StatelessWidget {
     final todayLearners = data.todayLearnerCount;
     final weekReports = data.weekReports.length;
     final weekLearners = data.weekLearnerCount;
+    final notStartedLearners = summary.totalLearners - summary.activeLearners;
 
     return AppSectionCard(
       title: '전체 요약',
@@ -548,8 +1462,14 @@ class _SummarySection extends StatelessWidget {
             onTap: () => onSelect(_DashboardDetail.allLearners),
           ),
           _MetricTile(
-            label: '활성 학습자',
+            label: '학습 시작',
             value: '${summary.activeLearners}명',
+            selected: selectedDetail == _DashboardDetail.allLearners,
+            onTap: () => onSelect(_DashboardDetail.allLearners),
+          ),
+          _MetricTile(
+            label: '미시작',
+            value: '$notStartedLearners명',
             selected: selectedDetail == _DashboardDetail.allLearners,
             onTap: () => onSelect(_DashboardDetail.allLearners),
           ),
@@ -788,7 +1708,7 @@ class _PendingApprovalList extends StatelessWidget {
             (learner) => _AdminListTile(
               title: learner.email.isEmpty ? learner.userId : learner.email,
               subtitle:
-                  '이름: ${learner.name} / 전화: ${learner.phone} / 기기: ${learner.deviceId}\n가입: ${learner.createdAt}',
+                  '이름: ${learner.name} / 전화: ${learner.phone} / 기기: ${learner.deviceId}\n가입: ${learner.createdAtKst}',
               trailing: FilledButton(
                 onPressed: () => onApprove(learner.userId),
                 child: const Text('승인'),
@@ -906,7 +1826,7 @@ class _ReportList extends StatelessWidget {
                   '응답 ${report.attemptedAnswers}개 / 정답률 ${_percent(report.accuracy)} / '
                   '말하기 ${_percent(report.averageSimilarity)} / 소요 ${report.durationMinutes}분\n'
                   '향상도: 정답률 ${_signedPercent(report.accuracyDelta)}, 말하기 ${_signedPercent(report.similarityDelta)} / '
-                  '제출: ${report.submittedAt}',
+                  '제출: ${report.submittedAtKst}',
             ),
           )
           .toList(),
@@ -930,7 +1850,7 @@ class _LearnerSummaryTile extends StatelessWidget {
           '평균 진도 ${_percent(learner.cumulativeCompletionAverage)} / '
           '정답률 ${_percent(learner.accuracy)} / 말하기 ${_percent(learner.averageSimilarity)} / '
           '말하기 통과율 ${_percent(learner.cumulativeSpeakingPassRate)}\n'
-          '최근 학습: ${learner.latestDateKey.isEmpty ? learner.updatedAt : learner.latestDateKey} / '
+          '최근 학습: ${learner.latestDateKey.isEmpty ? learner.updatedAtKst : learner.latestDateKey} / '
           '${learner.latestCategory} / ${learner.latestLevel} / ${learner.latestMode}',
     );
   }
@@ -1104,8 +2024,10 @@ class _AdminDashboardData {
   final List<_LearnerSummary> needsAttentionLearners;
   final List<_RecentReport> recentReports;
 
-  String get todayKey =>
-      DateTime.now().toUtc().toIso8601String().substring(0, 10);
+  String get todayKey {
+    final nowKst = DateTime.now().toUtc().add(const Duration(hours: 9));
+    return '${nowKst.year}-${nowKst.month.toString().padLeft(2, '0')}-${nowKst.day.toString().padLeft(2, '0')}';
+  }
 
   DateTime get _sevenDaysAgo =>
       DateTime.now().toUtc().subtract(const Duration(days: 7));
@@ -1249,6 +2171,8 @@ class _PendingApproval {
   final String deviceId;
   final String createdAt;
 
+  String get createdAtKst => _toKstDisplay(createdAt);
+
   factory _PendingApproval.fromMap(Map<String, dynamic> map) {
     return _PendingApproval(
       userId: map['userId'] as String? ?? '',
@@ -1301,6 +2225,8 @@ class _LearnerSummary {
   final int managementScore;
   final String riskReason;
   final String updatedAt;
+
+  String get updatedAtKst => _toKstDisplay(updatedAt);
 
   factory _LearnerSummary.fromMap(Map<String, dynamic> map) {
     return _LearnerSummary(
@@ -1372,6 +2298,7 @@ class _RecentReport {
   final String submittedAt;
 
   DateTime? get submittedAtDate => DateTime.tryParse(submittedAt)?.toUtc();
+  String get submittedAtKst => _toKstDisplay(submittedAt);
 
   factory _RecentReport.fromMap(Map<String, dynamic> map) {
     return _RecentReport(
@@ -1395,6 +2322,198 @@ class _RecentReport {
       submittedAt: map['submittedAt'] as String? ?? '-',
     );
   }
+}
+
+class _SimilarityEventDashboard {
+  const _SimilarityEventDashboard({
+    required this.event,
+    required this.totalLearners,
+    required this.totalAttempts,
+    required this.rankings,
+    required this.averageTotalLearners,
+    required this.averageTotalAttempts,
+    required this.averageRankings,
+    required this.reportTotalLearners,
+    required this.reportTotalReports,
+    required this.reportRankings,
+  });
+
+  final _SimilarityEventInfo? event;
+  final int totalLearners;
+  final int totalAttempts;
+  final List<_SimilarityEventRanking> rankings;
+  final int averageTotalLearners;
+  final int averageTotalAttempts;
+  final List<_SimilarityEventAverageRanking> averageRankings;
+  final int reportTotalLearners;
+  final int reportTotalReports;
+  final List<_SimilarityEventReportRanking> reportRankings;
+
+  factory _SimilarityEventDashboard.fromMap(Map<String, dynamic> map) {
+    final eventMap = _asMap(map['event']);
+    return _SimilarityEventDashboard(
+      event: eventMap.isEmpty ? null : _SimilarityEventInfo.fromMap(eventMap),
+      totalLearners: _asInt(map['totalLearners']),
+      totalAttempts: _asInt(map['totalAttempts']),
+      rankings: _asList(map['rankings'])
+          .map((ranking) => _SimilarityEventRanking.fromMap(_asMap(ranking)))
+          .toList(),
+      averageTotalLearners: _asInt(map['averageTotalLearners']),
+      averageTotalAttempts: _asInt(map['averageTotalAttempts']),
+      averageRankings: _asList(map['averageRankings'])
+          .map(
+            (ranking) =>
+                _SimilarityEventAverageRanking.fromMap(_asMap(ranking)),
+          )
+          .toList(),
+      reportTotalLearners: _asInt(map['reportTotalLearners']),
+      reportTotalReports: _asInt(map['reportTotalReports']),
+      reportRankings: _asList(map['reportRankings'])
+          .map((r) => _SimilarityEventReportRanking.fromMap(_asMap(r)))
+          .toList(),
+    );
+  }
+}
+
+class _SimilarityEventInfo {
+  const _SimilarityEventInfo({
+    required this.eventId,
+    required this.status,
+    required this.contentSetId,
+    required this.itemId,
+    required this.expectedText,
+    required this.startedAt,
+    required this.endedAt,
+  });
+
+  final String eventId;
+  final String status;
+  final String contentSetId;
+  final String itemId;
+  final String expectedText;
+  final String startedAt;
+  final String endedAt;
+
+  factory _SimilarityEventInfo.fromMap(Map<String, dynamic> map) {
+    return _SimilarityEventInfo(
+      eventId: map['eventId'] as String? ?? '',
+      status: map['status'] as String? ?? '',
+      contentSetId: map['contentSetId'] as String? ?? '',
+      itemId: map['itemId'] as String? ?? '',
+      expectedText: map['expectedText'] as String? ?? '',
+      startedAt: map['startedAt'] as String? ?? '',
+      endedAt: map['endedAt'] as String? ?? '',
+    );
+  }
+}
+
+class _SimilarityEventRanking {
+  const _SimilarityEventRanking({
+    required this.userId,
+    required this.learnerName,
+    required this.learnerPhone,
+    required this.similarityScore,
+    required this.passed,
+    required this.evaluatedAt,
+    required this.onDeviceFallback,
+  });
+
+  final String userId;
+  final String learnerName;
+  final String learnerPhone;
+  final int similarityScore;
+  final bool passed;
+  final String evaluatedAt;
+  final bool onDeviceFallback;
+
+  String get evaluatedAtKst => _toKstDisplay(evaluatedAt);
+  String get sourceLabel => onDeviceFallback ? '폰 전용' : '서버 우선';
+
+  factory _SimilarityEventRanking.fromMap(Map<String, dynamic> map) {
+    return _SimilarityEventRanking(
+      userId: map['userId'] as String? ?? '',
+      learnerName: map['learnerName'] as String? ?? '-',
+      learnerPhone: map['learnerPhone'] as String? ?? '-',
+      similarityScore: _asInt(map['similarityScore']),
+      passed: map['passed'] as bool? ?? false,
+      evaluatedAt: map['evaluatedAt'] as String? ?? '',
+      onDeviceFallback: map['onDeviceFallback'] as bool? ?? false,
+    );
+  }
+}
+
+class _SimilarityEventAverageRanking {
+  const _SimilarityEventAverageRanking({
+    required this.userId,
+    required this.learnerName,
+    required this.learnerPhone,
+    required this.averageSimilarity,
+    required this.attemptCount,
+    required this.latestEvaluatedAt,
+  });
+
+  final String userId;
+  final String learnerName;
+  final String learnerPhone;
+  final int averageSimilarity;
+  final int attemptCount;
+  final String latestEvaluatedAt;
+
+  String get latestEvaluatedAtKst => _toKstDisplay(latestEvaluatedAt);
+
+  factory _SimilarityEventAverageRanking.fromMap(Map<String, dynamic> map) {
+    return _SimilarityEventAverageRanking(
+      userId: map['userId'] as String? ?? '',
+      learnerName: map['learnerName'] as String? ?? '-',
+      learnerPhone: map['learnerPhone'] as String? ?? '-',
+      averageSimilarity: _asInt(map['averageSimilarity']),
+      attemptCount: _asInt(map['attemptCount']),
+      latestEvaluatedAt: map['latestEvaluatedAt'] as String? ?? '',
+    );
+  }
+}
+
+class _SimilarityEventReportRanking {
+  const _SimilarityEventReportRanking({
+    required this.userId,
+    required this.learnerName,
+    required this.learnerPhone,
+    required this.averageSimilarity,
+    required this.reportCount,
+    required this.latestSubmittedAt,
+  });
+
+  final String userId;
+  final String learnerName;
+  final String learnerPhone;
+  final int averageSimilarity;
+  final int reportCount;
+  final String latestSubmittedAt;
+
+  String get latestSubmittedAtKst => _toKstDisplay(latestSubmittedAt);
+
+  factory _SimilarityEventReportRanking.fromMap(Map<String, dynamic> map) {
+    return _SimilarityEventReportRanking(
+      userId: map['userId'] as String? ?? '',
+      learnerName: map['learnerName'] as String? ?? '-',
+      learnerPhone: map['learnerPhone'] as String? ?? '-',
+      averageSimilarity: _asInt(map['averageSimilarity']),
+      reportCount: _asInt(map['reportCount']),
+      latestSubmittedAt: map['latestSubmittedAt'] as String? ?? '',
+    );
+  }
+}
+
+String _toKstDisplay(String? isoUtc) {
+  if (isoUtc == null || isoUtc == '-' || isoUtc.isEmpty) return isoUtc ?? '-';
+  final dt = DateTime.tryParse(isoUtc)?.toUtc();
+  if (dt == null) return isoUtc;
+  final kst = dt.add(const Duration(hours: 9));
+  final mo = kst.month.toString().padLeft(2, '0');
+  final d = kst.day.toString().padLeft(2, '0');
+  final h = kst.hour.toString().padLeft(2, '0');
+  final mi = kst.minute.toString().padLeft(2, '0');
+  return '${kst.year}-$mo-$d $h:$mi (KST)';
 }
 
 Map<String, dynamic> _asMap(Object? value) {

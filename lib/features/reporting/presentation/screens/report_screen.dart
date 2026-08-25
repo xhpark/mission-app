@@ -59,7 +59,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
       'averageSimilarity': metrics.hasSpeaking
           ? metrics.averageSimilarity
           : null,
-      'completedAt': completedAt.toIso8601String(),
+      'completedAt': completedAt.toUtc().toIso8601String(),
       'durationSeconds': durationSeconds,
     });
     await ref
@@ -211,7 +211,8 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
       ),
       bottomNavigationBar: AppBottomActionBar(
         secondaryLabel: _submitted ? '학습 선택으로 이동' : '요약으로 돌아가기',
-        onSecondaryPressed: () => context.go(_submitted ? '/select' : '/session-summary'),
+        onSecondaryPressed: () =>
+            context.go(_submitted ? '/select' : '/session-summary'),
         tertiaryLabel: _submitted && _testSelectRouteAfterSubmit != null
             ? '다른 테스트 선택'
             : null,
@@ -320,10 +321,10 @@ String _formatDuration(int seconds) {
 }
 
 String _formatDateTime(DateTime value) {
-  final local = value.toLocal();
+  final kst = value.toUtc().add(const Duration(hours: 9));
   String two(int number) => number.toString().padLeft(2, '0');
-  return '${local.year}-${two(local.month)}-${two(local.day)} '
-      '${two(local.hour)}:${two(local.minute)}:${two(local.second)}';
+  return '${kst.year}-${two(kst.month)}-${two(kst.day)} '
+      '${two(kst.hour)}:${two(kst.minute)}:${two(kst.second)} KST';
 }
 
 String _categoryLabel(LearningCategory category) => switch (category) {
