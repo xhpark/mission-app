@@ -56,3 +56,14 @@ app.*.map.json
 /android/key.properties
 *.jks
 *.keystore
+
+# Local operational artifacts (never commit)
+# Credential/account exports - contain password hashes
+firebase_auth_export*.json
+auth_export*.json
+/-
+
+# Test and debug scratch output
+tmp_*.png
+tmp_test_logs/
+/functions/build/
